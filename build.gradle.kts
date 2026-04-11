@@ -4,7 +4,7 @@ plugins {
     id("java")
     kotlin("jvm") version "2.1.21"
     id("architectury-plugin") version "3.4-SNAPSHOT"
-    id("dev.architectury.loom") version "1.10-SNAPSHOT" apply false
+    id("dev.architectury.loom") version "1.13-SNAPSHOT" apply false
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
 }
 
@@ -16,7 +16,6 @@ subprojects {
     apply(plugin = "dev.architectury.loom")
 
     val loom = project.extensions.getByName<LoomGradleExtensionAPI>("loom")
-    loom.silentMojangMappingsLicense()
 
     dependencies {
         "minecraft"("com.mojang:minecraft:${project.property("minecraft_version")}")

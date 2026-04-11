@@ -5,7 +5,6 @@ repositories {
     maven("https://squiddev.cc/maven/")
     maven("https://maven.createmod.net")
     maven("https://mvn.devos.one/snapshots") // Registrate
-    maven("https://maven.neoforged.net/releases/")
 }
 
 architectury {
@@ -14,6 +13,10 @@ architectury {
 
 loom {
     accessWidenerPath = file("src/main/resources/wingscontracts.accesswidener")
+}
+
+tasks.named("remapJar") {
+    enabled = false
 }
 
 dependencies {
