@@ -1,10 +1,10 @@
 modLoader = "kotlinforforge"
-loaderVersion = "[4,)"
+loaderVersion = "[5.3,)"
 issueTrackerURL = "https://github.com/benjaminiserman/WingsContracts/issues"
 license = "MIT"
 
 [[mods]]
-modId = "${mod_id}"
+modId = "wingscontracts"
 version = "${version}"
 displayName = "Wing's Contracts"
 authors = "benjaminiserman"
@@ -16,44 +16,42 @@ logoFile = "icon.png"
 [[mixins]]
 config = "wingscontracts.mixins.json"
 
-[[dependencies.${mod_id}]]
-modId = "forge"
-mandatory = true
-versionRange = "[47,)"
-ordering = "NONE"
-side = "BOTH"
+[[dependencies.wingscontracts]]
+modId="neoforge"
+type="required"
+versionRange="[21.0.0,)"
 
-[[dependencies.${mod_id}]]
+[[dependencies.wingscontracts]]
 modId = "minecraft"
-mandatory = true
-versionRange = "[${minecraft_version},)"
+type="required"
+versionRange = "[${minecraft_version}]"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.wingscontracts]]
 modId = "architectury"
-mandatory = true
+type="required"
 versionRange = "[${architectury_version},)"
 ordering = "AFTER"
 side = "BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.wingscontracts]]
 modId = "kotlinforforge"
-mandatory = true
+type="required"
 versionRange = "[${kotlin_for_forge_version}]"
 ordering = "AFTER"
 side = "BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.wingscontracts]]
 modId = "create"
-mandatory = false
+type="optional"
 versionRange = "[${create_version}]"
 ordering = "AFTER"
 side = "BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.wingscontracts]]
 modId = "cc_tweaked"
-mandatory = false
+type="optional"
 versionRange = "[${cc_tweaked_version}]"
 ordering = "AFTER"
 side = "BOTH"

@@ -2,7 +2,6 @@ package dev.biserman.wingscontracts.advancements
 
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
-import dev.biserman.wingscontracts.WingsContractsMod.prefix
 import dev.biserman.wingscontracts.advancements.ContractCompleteTrigger.TriggerInstance
 import dev.biserman.wingscontracts.nbt.ItemConditionParser
 import net.minecraft.advancements.critereon.ContextAwarePredicate
@@ -34,7 +33,6 @@ class ContractCompleteTrigger : SimpleCriterionTrigger<TriggerInstance>() {
     }
 
     companion object {
-        val ID = prefix("contract_complete")
         val INSTANCE = ContractCompleteTrigger()
         val CODEC: Codec<TriggerInstance> = RecordCodecBuilder.create {
             it.group(

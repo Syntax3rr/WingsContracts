@@ -6,7 +6,6 @@ import dev.architectury.event.events.common.TickEvent
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry
 import dev.architectury.utils.Env
 import dev.architectury.utils.EnvExecutor
-import dev.biserman.wingscontracts.advancements.ContractCompleteTrigger
 import dev.biserman.wingscontracts.client.WingsContractsClient
 import dev.biserman.wingscontracts.client.renderer.FakeItemEntityRenderer
 import dev.biserman.wingscontracts.compat.CompatMods
@@ -16,7 +15,6 @@ import dev.biserman.wingscontracts.nbt.ContractTagHelper
 import dev.biserman.wingscontracts.registry.*
 import dev.biserman.wingscontracts.scoreboard.ScoreboardHandler
 import dev.biserman.wingscontracts.server.WingsContractsNetHandler
-import net.minecraft.advancements.CriteriaTriggers
 import net.minecraft.resources.ResourceLocation
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -34,7 +32,7 @@ object WingsContractsMod {
         ModCommandRegistry.register()
         ModMenuRegistry.register()
         ModReloadListenerRegistry.register()
-        CriteriaTriggers.register(ContractCompleteTrigger.ID.toString(), ContractCompleteTrigger.INSTANCE)
+        ModCriteriaTriggerRegistry.register()
 
         WingsContractsNetHandler.init()
 

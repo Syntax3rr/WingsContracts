@@ -64,7 +64,7 @@ tasks.processResources {
     inputs.property("group", rootProject.property("maven_group"))
     inputs.property("version", project.version)
 
-    filesMatching("META-INF/mods.toml") {
+    filesMatching("META-INF/neoforge.mods.toml") {
         expand(mapOf(
             "group" to rootProject.property("maven_group"),
             "version" to project.version,
