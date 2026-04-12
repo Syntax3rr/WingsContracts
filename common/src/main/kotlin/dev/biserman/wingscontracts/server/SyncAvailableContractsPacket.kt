@@ -26,7 +26,7 @@ class SyncAvailableContractsPacket(val tag: CompoundTag) : CustomPacketPayload {
         fun handle(payload: SyncAvailableContractsPacket, context: NetworkManager.PacketContext) {
             ContractSavedData.set(
                 Minecraft.getInstance().level ?: return,
-                ContractSavedData.load(payload.tag, context.player.level.registryAccess())
+                ContractSavedData.load(payload.tag, context.player.level().registryAccess())
             )
         }
     }

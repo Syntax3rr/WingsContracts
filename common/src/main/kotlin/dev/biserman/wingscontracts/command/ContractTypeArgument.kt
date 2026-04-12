@@ -45,7 +45,6 @@ class ContractTypeArgument : ArgumentType<String> {
             "bound" to { level, tag -> BoundContract.load(tag) }
         )
 
-
         private val ERROR_INVALID: DynamicCommandExceptionType = DynamicCommandExceptionType(Function {
             Component.translatable(
                 "commands.${WingsContractsMod.MOD_ID}.argument.contract_type.invalid",

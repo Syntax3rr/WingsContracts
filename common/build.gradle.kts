@@ -15,9 +15,9 @@ loom {
     accessWidenerPath = file("src/main/resources/wingscontracts.accesswidener")
 }
 
-tasks.named("remapJar") {
-    enabled = false
-}
+//tasks.named("remapJar") {
+//    enabled = false
+//}
 
 dependencies {
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
@@ -29,14 +29,14 @@ dependencies {
     val minecraftVersion = rootProject.property("minecraft_version")
     val ccTweakedMinecraftVersion = rootProject.property("cc_tweaked_minecraft_version")
     val ccTweakedVersion = rootProject.property("cc_tweaked_version")
-    compileOnly("cc.tweaked:cc-tweaked-$ccTweakedMinecraftVersion-core-api:$ccTweakedVersion")
-    compileOnly("cc.tweaked:cc-tweaked-$ccTweakedMinecraftVersion-common-api:$ccTweakedVersion")
+    modCompileOnly("cc.tweaked:cc-tweaked-$ccTweakedMinecraftVersion-core-api:$ccTweakedVersion")
+    modCompileOnly("cc.tweaked:cc-tweaked-$ccTweakedMinecraftVersion-common-api:$ccTweakedVersion")
 
     val createVersion = rootProject.property("create_version")
     val ponderVersion = rootProject.property("ponder_version")
     val registrateVersion = rootProject.property("registrate_version")
-    compileOnly("com.simibubi.create:create-$minecraftVersion:$createVersion:slim") { isTransitive = false }
-    compileOnly("net.createmod.ponder:Ponder-NeoForge-$minecraftVersion:$ponderVersion") { isTransitive = false }
+    modCompileOnly("com.simibubi.create:create-$minecraftVersion:$createVersion:slim") { isTransitive = false }
+    modCompileOnly("net.createmod.ponder:Ponder-NeoForge-$minecraftVersion:$ponderVersion") { isTransitive = false }
     compileOnly("com.tterrag.registrate:Registrate:${registrateVersion}")
 
     implementation(kotlin("reflect"))

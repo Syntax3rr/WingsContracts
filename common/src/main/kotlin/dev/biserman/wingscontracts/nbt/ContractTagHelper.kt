@@ -5,14 +5,10 @@ package dev.biserman.wingscontracts.nbt
 import com.google.gson.JsonObject
 import com.mojang.serialization.JsonOps
 import dev.biserman.wingscontracts.config.ModConfig
-import net.minecraft.client.Minecraft
 import net.minecraft.core.HolderLookup
-import net.minecraft.core.RegistryAccess
 import net.minecraft.core.component.DataComponents
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
-import net.minecraft.server.MinecraftServer
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.CustomData
 import kotlin.math.max
@@ -46,14 +42,10 @@ object ContractTagHelper {
     }
 
     fun setContractTag(contractItemStack: ItemStack, contractTag: ContractTag) {
-        contractItemStack.update(DataComponents.CUSTOM_DATA, CustomData.of(CompoundTag())) {
-            // unsafe mutations!
-            it.tag.put(
-                CONTRACT_INFO_KEY,
-                contractTag.tag
-            )
-            it
-        }
+        contractItemStack.set(
+            DataComponents.CUSTOM_DATA,
+            CustomData.of(CompoundTag().also { it.put(CONTRACT_INFO_KEY, contractTag.tag) })
+        )
     }
 
     class Property<T>(
@@ -121,6 +113,7 @@ object ContractTagHelper {
                     tag.putInt("Count", value.itemStack.count)
                     this.put(safeKey, tag)
                 }
+
                 is Reward.Random -> this.putDouble(safeKey, value.value)
             }
         })

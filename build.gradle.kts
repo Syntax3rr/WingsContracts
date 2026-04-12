@@ -17,6 +17,7 @@ subprojects {
 
     val loom = project.extensions.getByName<LoomGradleExtensionAPI>("loom")
 
+//    loom.noIntermediateMappings()
     dependencies {
         "minecraft"("com.mojang:minecraft:${project.property("minecraft_version")}")
         "mappings"(
