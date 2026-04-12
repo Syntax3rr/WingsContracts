@@ -28,8 +28,7 @@ object DebugContractCommand {
 
     const val PAGE_SIZE = 20
     fun listPage(sourceStack: CommandSourceStack, page: Int): Int {
-        ContractDataReloadListener.tryValidateContracts()
-        val maxPage = (ContractDataReloadListener.availableContracts.size / PAGE_SIZE) + 1
+        val maxPage = (ContractDataReloadListener.data.availableContracts.size / PAGE_SIZE) + 1
         if (page > maxPage) {
             sourceStack.sendFailure(
                 Component.translatable(
@@ -42,9 +41,9 @@ object DebugContractCommand {
         }
 
         sourceStack.sendSuccess({ Component.literal("==========================") }, true)
-        for (entry in ContractDataReloadListener.availableContracts.withIndex().toList().subList(
+        for (entry in ContractDataReloadListener.data.availableContracts.withIndex().toList().subList(
             (page - 1) * PAGE_SIZE,
-            min(page * PAGE_SIZE, ContractDataReloadListener.availableContracts.size)
+            min(page * PAGE_SIZE, ContractDataReloadListener.data.availableContracts.size)
         )) {
             sourceStack.sendSuccess({ Component.literal("${entry.index}. ${entry.value.tag}") }, true)
         }

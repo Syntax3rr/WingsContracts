@@ -39,77 +39,58 @@ val GSON: Gson = (GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().creat
 class RewardBagEntry(val item: ItemStack, val value: Double, val weight: Int, val formatString: String? = null)
 
 object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wingscontracts") {
-    private val allAvailableContracts = mutableListOf<ContractTag>()
-    private val nonDefaultAvailableContracts = mutableListOf<ContractTag>()
-    val availableContracts
-        get() = if (ModConfig.SERVER.disableDefaultContractOptions.get()) {
-            nonDefaultAvailableContracts.toList()
-        } else {
-            allAvailableContracts.toList()
+    var dataVersion = 0
+    var data = ContractResourceData()
+        get() {
+            return if (dataVersion == field.version) {
+                field
+            } else {
+                field = resolveContracts(dataVersion)
+                field
+            }
         }
-
-    private val allDefaultRewards = mutableListOf<RewardBagEntry>()
-    private val nonDefaultDefaultRewards =
-        mutableListOf<RewardBagEntry>() // funny name, but it refers to custom-specified default rewards
-    val defaultRewards
-        get() = if (ModConfig.SERVER.disableDefaultContractOptions.get()) {
-            nonDefaultDefaultRewards.toList()
-        } else {
-            allDefaultRewards.toList()
-        }
-
-    fun valueReward(itemStack: ItemStack): Double {
-        val reward = defaultRewards.find { it.item.item == itemStack.item } ?: return 0.0
-        return itemStack.count * reward.value / reward.item.count
-    }
-
-    private val fullRewardBlocklist = mutableListOf<String>()
-    private val nonDefaultRewardBlocklist = mutableListOf<String>()
-    val rewardBlocklist
-        get() = if (ModConfig.SERVER.disableDefaultContractOptions.get()) {
-            nonDefaultRewardBlocklist.toList()
-        } else {
-            fullRewardBlocklist.toList()
-        }
-
-    var areContractsValidated = false
 
     override fun prepare(
         resourceManager: ResourceManager,
         profilerFiller: ProfilerFiller
     ): Map<ResourceLocation, JsonElement> {
-        allAvailableContracts.clear()
-        nonDefaultAvailableContracts.clear()
-        allDefaultRewards.clear()
-        nonDefaultDefaultRewards.clear()
-        fullRewardBlocklist.clear()
-        nonDefaultRewardBlocklist.clear()
-
         return super.prepare(resourceManager, profilerFiller)
     }
 
     fun randomTag(): ContractTag {
-        tryValidateContracts()
-
-        if (availableContracts.isEmpty()) {
+        if (data.availableContracts.isEmpty()) {
             WingsContractsMod.LOGGER.warn("Available contracts pool is empty, returning unknown contract.")
             val contract = ContractTag(CompoundTag())
             contract.name = Component.translatable("${WingsContractsMod.MOD_ID}.contract.unknown").string
             return contract
         } else {
-            return ContractTag(availableContracts.random().tag.copy())
+            return ContractTag(data.availableContracts.random().tag.copy())
         }
     }
+
+    var jsonBlobs = mutableMapOf<ResourceLocation, JsonElement>()
 
     override fun apply(
         jsonMap: Map<ResourceLocation, JsonElement>,
         resourceManager: ResourceManager,
         profilerFiller: ProfilerFiller
     ) {
-        areContractsValidated = false
+        jsonBlobs = jsonMap.toMutableMap()
+        dataVersion += 1
+    }
+
+    fun resolveContracts(version: Int): ContractResourceData {
         WingsContractsMod.LOGGER.info("Building abyssal contracts pool...")
         var skippedBecauseUnloaded = 0
-        for ((resourceLocation, json) in jsonMap) {
+
+        val allDefaultContracts = mutableListOf<ContractTag>()
+        val nonDefaultDefaultContracts = mutableListOf<ContractTag>()
+        val allDefaultRewards = mutableListOf<RewardBagEntry>()
+        val nonDefaultDefaultRewards = mutableListOf<RewardBagEntry>()
+        val fullRewardBlocklist = mutableListOf<String>()
+        val nonDefaultRewardBlocklist = mutableListOf<String>()
+
+        for ((resourceLocation, json) in jsonBlobs) {
             if (resourceLocation.path.startsWith("_")) {
                 continue
             }
@@ -123,7 +104,10 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
                 val parsedContracts = jsonObject.get("contracts")?.asJsonArray?.map {
                     ContractTag.fromJson(it.asJsonObject)
                 } ?: listOf()
-                skippedBecauseUnloaded += validateContracts(parsedContracts, resourceLocation, isDefault)
+                val validationResult = validateContracts(parsedContracts, resourceLocation, isDefault)
+                skippedBecauseUnloaded += validationResult.skippedBecauseUnloaded
+                allDefaultContracts.addAll(validationResult.allAvailableContracts)
+                nonDefaultDefaultContracts.addAll(validationResult.nonDefaultAvailableContracts)
 
                 val parsedDefaultRewards = jsonObject.get("rewards")?.asJsonArray?.mapNotNull {
                     val itemStack = ItemStack.parse(
@@ -170,13 +154,32 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
         if (skippedBecauseUnloaded != 0) {
             WingsContractsMod.LOGGER.info("Skipped $skippedBecauseUnloaded contracts from unloaded mods.")
         }
+
+        return ContractResourceData(
+            allDefaultContracts,
+            nonDefaultDefaultContracts,
+            allDefaultRewards,
+            nonDefaultDefaultRewards,
+            fullRewardBlocklist,
+            nonDefaultRewardBlocklist,
+            version
+        )
     }
+
+    data class ValidatedContractsResult(
+        val allAvailableContracts: List<ContractTag>,
+        val nonDefaultAvailableContracts: List<ContractTag>,
+        val skippedBecauseUnloaded: Int,
+    )
 
     fun validateContracts(
         parsedContracts: List<ContractTag>,
         resourceLocation: ResourceLocation,
         isDefault: Boolean
-    ): Int {
+    ): ValidatedContractsResult {
+        val allAvailableContracts = mutableListOf<ContractTag>()
+        val nonDefaultAvailableContracts = mutableListOf<ContractTag>()
+
         var skippedBecauseUnloaded = 0
         for (contract in parsedContracts) {
             // skip contracts that only apply to unloaded mods
@@ -232,18 +235,16 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
             }
         }
 
-        return skippedBecauseUnloaded
-    }
-
-    fun tryValidateContracts() {
-        if (!areContractsValidated) {
-            WingsContractsMod.LOGGER.info("Checking for invalid contracts...")
-            listOf(allAvailableContracts, nonDefaultAvailableContracts).forEach { contractList ->
-                removeEmptyTags(contractList)
-                removeImpossibleUnitDemands(contractList)
-            }
-            areContractsValidated = true
+        listOf(allAvailableContracts, nonDefaultAvailableContracts).forEach { contractList ->
+            removeEmptyTags(contractList)
+            removeImpossibleUnitDemands(contractList)
         }
+
+        return ValidatedContractsResult(
+            allAvailableContracts,
+            nonDefaultAvailableContracts,
+            skippedBecauseUnloaded
+        )
     }
 
     fun removeEmptyTags(contractList: MutableList<ContractTag>) {

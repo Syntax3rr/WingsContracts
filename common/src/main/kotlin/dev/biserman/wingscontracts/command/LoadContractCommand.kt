@@ -57,10 +57,9 @@ object LoadContractCommand {
         try {
             val index = jsonString.toIntOrNull()
             if (index != null) {
-                ContractDataReloadListener.tryValidateContracts()
                 return ContractSavedData.get(level).generator.generateContract(
                     ContractTag(
-                        ContractDataReloadListener.availableContracts[index].tag.copy()
+                        ContractDataReloadListener.data.availableContracts[index].tag.copy()
                     )
                 )
             }

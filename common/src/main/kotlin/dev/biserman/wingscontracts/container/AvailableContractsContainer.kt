@@ -1,6 +1,7 @@
 package dev.biserman.wingscontracts.container
 
 import dev.biserman.wingscontracts.config.ModConfig
+import dev.biserman.wingscontracts.config.getOrDefault
 import net.minecraft.core.NonNullList
 import net.minecraft.world.Container
 import net.minecraft.world.ContainerHelper
@@ -9,9 +10,9 @@ import net.minecraft.world.item.ItemStack
 
 class AvailableContractsContainer() : Container {
     val items: NonNullList<ItemStack> =
-        NonNullList.withSize(ModConfig.SERVER.abyssalContractsPoolOptions.get(), ItemStack.EMPTY)
+        NonNullList.withSize(ModConfig.SERVER.abyssalContractsPoolOptions.getOrDefault(), ItemStack.EMPTY)
 
-    override fun getContainerSize(): Int = ModConfig.SERVER.abyssalContractsPoolOptions.get()
+    override fun getContainerSize(): Int = ModConfig.SERVER.abyssalContractsPoolOptions.getOrDefault()
     override fun isEmpty(): Boolean = items.isEmpty() || items.all { it.isEmpty }
     override fun getItem(i: Int): ItemStack? = items[i]
 

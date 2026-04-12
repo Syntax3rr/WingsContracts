@@ -5,6 +5,7 @@ import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.compat.computercraft.DetailsHelper.details
 import dev.biserman.wingscontracts.config.GrowthFunctionOptions
 import dev.biserman.wingscontracts.config.ModConfig
+import dev.biserman.wingscontracts.config.getOrDefault
 import dev.biserman.wingscontracts.data.ContractDataReloadListener
 import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.nbt.ContractTag
@@ -211,6 +212,7 @@ class AbyssalContract(
                 val growth = (baseUnitsDemanded * (level - 1) * (quantityGrowthFactor - 1)).toInt()
                 baseUnitsDemanded + growth
             }
+
             GrowthFunctionOptions.EXPONENTIAL -> (baseUnitsDemanded * quantityGrowthFactor.pow(level - 1)).toInt()
             else -> throw Error("Unrecognized contract growth function: $growthFn")
         }
@@ -283,7 +285,8 @@ class AbyssalContract(
         get() = unitsFulfilled >= unitsDemanded
 
     fun formatReward(count: Int): String {
-        val rewardEntry = ContractDataReloadListener.defaultRewards.firstOrNull { it.item.item == reward.item }
+        val rewardEntry =
+            ContractDataReloadListener.data.defaultRewards.firstOrNull { it.item.item == reward.item }
         if (rewardEntry == null || rewardEntry.formatString == null) {
             val trimmed = reward.displayName.string.trimBrackets()
             when {
@@ -306,6 +309,7 @@ class AbyssalContract(
                         trimmed
                     ).string
                 }
+
                 reward.isEnchanted -> return translateContract("enchanted_reward_format", count, trimmed).string
                 else -> return "$count $trimmed"
             }
@@ -498,7 +502,8 @@ class AbyssalContract(
                         data?.generator?.getRandomReward(reward.value) ?: ContractSavedData.FALLBACK_REWARD.item
                 },
                 level = tag.level ?: 1,
-                quantityGrowthFactor = tag.quantityGrowthFactor ?: ModConfig.SERVER.defaultQuantityGrowthFactor.get(),
+                quantityGrowthFactor = tag.quantityGrowthFactor
+                    ?: ModConfig.SERVER.defaultQuantityGrowthFactor.get(),
                 maxLevel = tag.maxLevel ?: ModConfig.SERVER.defaultMaxLevel.get(),
                 isActive = tag.isActive ?: true,
                 isInitialized = tag.isInitialized ?: false

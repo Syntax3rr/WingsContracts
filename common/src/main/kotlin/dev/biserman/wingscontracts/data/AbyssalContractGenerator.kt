@@ -65,7 +65,7 @@ class AbyssalContractGenerator(val data: ContractSavedData) {
                     }
 
                     // skip contracts that are on the reward blocklist
-                    if (ContractDataReloadListener.rewardBlocklist
+                    if (ContractDataReloadListener.data.rewardBlocklist
                             .contains(otherContractItem.`arch$registryName`().toString())
                     ) {
                         continue
@@ -123,7 +123,7 @@ class AbyssalContractGenerator(val data: ContractSavedData) {
 
     private fun getCount(reward: RewardBagEntry, value: Double) = round(value / reward.value).toInt()
     fun getRandomReward(value: Double): ItemStack {
-        val sufficientlyCheapRewardsBag = ContractDataReloadListener.defaultRewards.filter { getCount(it, value) >= 1 }
+        val sufficientlyCheapRewardsBag = ContractDataReloadListener.data.defaultRewards.filter { getCount(it, value) >= 1 }
         val sufficientlyCheapRewardsWeightSum = sufficientlyCheapRewardsBag.sumOf { it.weight }
 
         if (sufficientlyCheapRewardsWeightSum > 0) {
@@ -137,9 +137,9 @@ class AbyssalContractGenerator(val data: ContractSavedData) {
             }
         }
 
-        val lastFit = ContractDataReloadListener.defaultRewards.lastOrNull { getCount(it, value) >= 1 }
+        val lastFit = ContractDataReloadListener.data.defaultRewards.lastOrNull { getCount(it, value) >= 1 }
         return if (lastFit == null) {
-            ContractDataReloadListener.defaultRewards.minBy { it.value }.item.copy()
+            ContractDataReloadListener.data.defaultRewards.minBy { it.value }.item.copy()
         } else {
             return lastFit.item.copyWithCount(lastFit.item.count * getCount(lastFit, value))
         }

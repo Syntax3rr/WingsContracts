@@ -477,7 +477,7 @@ class ContractPortalBlockEntity(
                 ScoreboardHandler.add(
                     serverLevel,
                     player,
-                    rewards.sumOf { floor(ContractDataReloadListener.valueReward(it)) }
+                    rewards.sumOf { floor(ContractDataReloadListener.data.valueReward(it)) }
                 )
 
                 if (contract.unitsFulfilled >= contract.unitsDemanded) {

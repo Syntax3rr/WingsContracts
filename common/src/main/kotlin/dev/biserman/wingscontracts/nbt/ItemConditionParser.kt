@@ -2,26 +2,21 @@
 
 package dev.biserman.wingscontracts.nbt
 
-import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute
 import dev.architectury.registry.fuel.FuelRegistry
 import dev.biserman.wingscontracts.WingsContractsMod
-import dev.biserman.wingscontracts.core.name
 import dev.biserman.wingscontracts.util.ComponentHelper.trimBrackets
 import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.ai.attributes.Attribute
 import net.minecraft.world.entity.ai.attributes.AttributeModifier
-import net.minecraft.world.item.ArmorItem
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.ItemAttributeModifiers
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.max
-import kotlin.toString
 
 class ItemCondition(val text: String, val match: (ItemStack) -> Boolean) {
     override fun toString() = text
@@ -119,6 +114,7 @@ object ItemConditionParser {
                 value.toDoubleOrNull() != null -> wrapNavigate("0.0")
                 else -> wrapNavigate("")
             }
+
             "attribute" -> attribute@ ({
                 it.getAttributeValue(
                     BuiltInRegistries.ATTRIBUTE.get(
@@ -132,6 +128,7 @@ object ItemConditionParser {
                     attributeOperationsMap[keyComponents[keyComponents.size - 1]] ?: return@attribute "0"
                 ).toString()
             })
+
             "mod" -> ({ it.item.`arch$registryName`()?.namespace ?: "" })
             "path" -> ({ it.item.`arch$registryName`()?.path ?: "" })
             "id" -> ({ it.item.`arch$registryName`()?.toString() ?: "" })
@@ -149,10 +146,15 @@ object ItemConditionParser {
             "maxStackSize" -> ({
                 (it.components.get(DataComponents.MAX_STACK_SIZE) ?: Item.DEFAULT_MAX_STACK_SIZE).toString()
             })
+
             "maxDamage" -> ({ it.get(DataComponents.MAX_DAMAGE)?.toString() ?: "0" })
             "nutrition" -> ({ it.get(DataComponents.FOOD)?.nutrition?.toString() ?: "0" })
             "saturationModifier" -> ({ it.get(DataComponents.FOOD)?.saturation()?.toString() ?: "0.0" })
             "canAlwaysEat" -> ({ it.get(DataComponents.FOOD)?.canAlwaysEat?.toString() ?: "false" })
+            "isFastFood" -> ({
+                (((it.get(DataComponents.FOOD)?.eatDurationTicks() ?: Int.MAX_VALUE) <= 20).toString())
+            })
+
             "eatSeconds" -> ({ it.get(DataComponents.FOOD)?.eatSeconds?.toString() ?: Int.MAX_VALUE.toString() })
             "isBlock" -> ({ (it.item is BlockItem).toString() })
             "class" -> ({ it.item.javaClass.name })
@@ -176,10 +178,12 @@ object ItemConditionParser {
                 it.get(DataComponents.TRIM)?.pattern()?.value()?.templateItem?.value()?.`arch$registryName`()
                     ?.toString() ?: ""
             })
+
             "armorTrimMaterial" -> ({
                 it.get(DataComponents.TRIM)?.material()?.value()?.ingredient?.value()?.`arch$registryName`()?.toString()
                     ?: ""
             })
+
             "isJukeboxPlayable" -> ({ (it.components.get(DataComponents.JUKEBOX_PLAYABLE) != null).toString() })
             "jukeboxSong" -> ({ it.get(DataComponents.JUKEBOX_PLAYABLE)?.song?.key?.location()?.toString() ?: "" })
             "noteBlockSound" -> ({ it.get(DataComponents.NOTE_BLOCK_SOUND)?.toString() ?: "false" })
@@ -189,14 +193,22 @@ object ItemConditionParser {
                     it.effect().unwrapKey().getOrNull().toString()
                 } ?: ""
             })
+
             "potionEffects" -> ({
                 it.get(DataComponents.POTION_CONTENTS)?.allEffects?.joinToString(",") {
                     it.effect.unwrapKey().getOrNull().toString()
                 } ?: ""
             })
+
             "potionColor" -> ({ it.get(DataComponents.POTION_CONTENTS)?.color?.toString(16) ?: "" })
-            "potionCustomColor" -> ({ it.get(DataComponents.POTION_CONTENTS)?.customColor?.getOrNull()?.toString(16) ?: "" })
-            "potionType" -> ({ it.get(DataComponents.POTION_CONTENTS)?.potion?.get()?.unwrapKey()?.getOrNull()?.toString() ?: "" })
+            "potionCustomColor" -> ({
+                it.get(DataComponents.POTION_CONTENTS)?.customColor?.getOrNull()?.toString(16) ?: ""
+            })
+
+            "potionType" -> ({
+                it.get(DataComponents.POTION_CONTENTS)?.potion?.get()?.unwrapKey()?.getOrNull()?.toString() ?: ""
+            })
+
             else -> throw Error("Condition key not recognized: ${keyComponents[0]}")
         }
 
@@ -225,10 +237,12 @@ object ItemConditionParser {
                 val regex = Regex(value)
                 ItemCondition(condition) { regex.matches(fetchItemValue(it)) }
             }
+
             "!$" -> {
                 val regex = Regex(value)
                 ItemCondition(condition) { !regex.matches(fetchItemValue(it)) }
             }
+
             else -> {
                 WingsContractsMod.LOGGER.warn("Failed to parse condition $condition: unknown operator $operator")
                 null
