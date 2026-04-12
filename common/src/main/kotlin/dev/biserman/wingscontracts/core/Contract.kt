@@ -185,6 +185,7 @@ abstract class Contract(
             } else {
                 listOf(Component.literal(""))
             }
+
             else -> {
                 val start = if (displayShort) listOf() else listOf(translateContract("matches_following"))
                 start + listTargets.map { Component.literal("$complexPrefix$it") }
@@ -424,7 +425,10 @@ abstract class Contract(
             }
 
         fun translateContract(key: String, vararg objects: Any): MutableComponent =
-            Component.translatable("${WingsContractsMod.MOD_ID}.contract.$key", *objects)
+            Component.translatable(
+                "${WingsContractsMod.MOD_ID}.contract.$key",
+                *(objects.map { if (it is ResourceLocation) it.toString() else it }.toTypedArray())
+            )
 
         fun getDisplayItem(itemStack: ItemStack, time: Float): ItemStack {
             val contract = LoadedContracts[itemStack] ?: return ItemStack.EMPTY

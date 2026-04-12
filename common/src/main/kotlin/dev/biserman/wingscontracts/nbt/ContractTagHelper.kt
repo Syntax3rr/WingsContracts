@@ -92,11 +92,11 @@ object ContractTagHelper {
                 val loadedValue = max(1.0, this.getDouble(it))
                 return@safeGet Reward.Random(loadedValue)
             } else if (this.contains(it)) {
-                val itemStack = ItemStack.parse(
+                val itemStack = ItemStack.parseOptional(
                     registryAccess
                         ?: return@safeGet Reward.Defined(ItemStack.EMPTY),
                     this.getCompound(it)
-                ).orElse(ItemStack.EMPTY)
+                )
                 itemStack.count = this.getCompound(it).getInt("Count")
                 return@safeGet Reward.Defined(itemStack)
             } else {
@@ -121,11 +121,11 @@ object ContractTagHelper {
     fun itemStack(key: String? = null) =
         Property(key, safeGet {
             if (this.contains(it)) {
-                val itemStack = ItemStack.parse(
+                val itemStack = ItemStack.parseOptional(
                     registryAccess
                         ?: return@safeGet ItemStack.EMPTY,
                     this.getCompound(it)
-                ).orElse(ItemStack.EMPTY)
+                )
                 itemStack.count = this.getCompound(it).getInt("Count")
                 return@safeGet itemStack
             } else {

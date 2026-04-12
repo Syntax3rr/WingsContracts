@@ -31,7 +31,6 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 import net.minecraft.world.item.ItemStack
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 
 val GSON: Gson = (GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create()
@@ -110,13 +109,13 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
                 nonDefaultDefaultContracts.addAll(validationResult.nonDefaultAvailableContracts)
 
                 val parsedDefaultRewards = jsonObject.get("rewards")?.asJsonArray?.mapNotNull {
-                    val itemStack = ItemStack.parse(
+                    val itemStack = ItemStack.parseOptional(
                         ContractTagHelper.registryAccess!!,
                         JsonOps.INSTANCE.convertTo(
                             NbtOps.INSTANCE,
                             it.asJsonObject.get("item")
                         ) as CompoundTag
-                    ).getOrNull()
+                    )
 
                     if (itemStack == null) {
                         WingsContractsMod.LOGGER.warn("Could not find itemStack ${it.asJsonObject.get("item")}")

@@ -108,7 +108,7 @@ class ContractPortalBlockEntity(
 
     override fun loadAdditional(compoundTag: CompoundTag, provider: HolderLookup.Provider) {
         this.cooldownTime = compoundTag.getInt("SuckCooldown")
-        this.contractSlot = ItemStack.parse(provider, compoundTag.getCompound("ContractSlot")).orElse(ItemStack.EMPTY)
+        this.contractSlot = ItemStack.parseOptional(provider, compoundTag.getCompound("ContractSlot"))
         this.lastPlayer = compoundTag.getUUID("LastPlayer")
 
         loadAllItems(compoundTag.getCompound("Items"), cachedInput.items, provider)
@@ -129,7 +129,7 @@ class ContractPortalBlockEntity(
             val compoundTag2 = listTag.getCompound(i)
             val count = compoundTag2.getByte("Slot").toInt() and 255
             if (count >= 0 && count < containerList.size) {
-                containerList[count] = ItemStack.parse(provider, compoundTag2).orElse(ItemStack.EMPTY)
+                containerList[count] = ItemStack.parseOptional(provider, compoundTag2)
             }
         }
     }
@@ -160,9 +160,11 @@ class ContractPortalBlockEntity(
         compoundTag.putInt("SuckCooldown", this.cooldownTime)
         compoundTag.putUUID("LastPlayer", this.lastPlayer)
 
-        val contractSlotTag = CompoundTag()
-        contractSlot.save(provider, contractSlotTag)
-        compoundTag.put("ContractSlot", contractSlotTag)
+        if (contractSlot != ItemStack.EMPTY) {
+            val contractSlotTag = CompoundTag()
+            contractSlot.save(provider, contractSlotTag)
+            compoundTag.put("ContractSlot", contractSlotTag)
+        }
 
         val cachedInputsTag = saveAllItems(cachedInput.items, provider)
         val cachedRewardsTag = saveAllItems(cachedRewards.items, provider)
@@ -269,8 +271,10 @@ class ContractPortalBlockEntity(
                     val stackToSpit = when {
                         !portal.cachedRewards.isEmpty ->
                             portal.cachedRewards.items.first { !it.isEmpty }
+
                         !portal.cachedInput.isEmpty ->
                             portal.cachedInput.items.firstOrNull { itemStack -> !itemStack.isEmpty }
+
                         else -> null
                     }
 
