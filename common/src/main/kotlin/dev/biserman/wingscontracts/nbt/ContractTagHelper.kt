@@ -93,8 +93,8 @@ object ContractTagHelper {
                 return@safeGet Reward.Random(loadedValue)
             } else if (this.contains(it)) {
                 val itemStack = ItemStack.parseOptional(
-                    registryAccess
-                        ?: return@safeGet Reward.Defined(ItemStack.EMPTY),
+                    registryAccess!!,
+//                        ?: return@safeGet Reward.Defined(ItemStack.EMPTY),
                     this.getCompound(it)
                 )
                 itemStack.count = this.getCompound(it).getInt("Count")
@@ -105,9 +105,9 @@ object ContractTagHelper {
         }, safeWrite@{ safeKey, value ->
             when (value) {
                 is Reward.Defined -> {
-                    val tag = value.itemStack.save(
-                        registryAccess
-                            ?: return@safeWrite,
+                    val tag = value.itemStack.copyWithCount(1).save(
+                        registryAccess!!,
+//                            ?: return@safeWrite,
                         CompoundTag()
                     ) as CompoundTag
                     tag.putInt("Count", value.itemStack.count)

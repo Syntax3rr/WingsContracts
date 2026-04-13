@@ -7,7 +7,9 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.world.item.ItemStack
+import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
+import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.client.IItemDecorator
 import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent
 
@@ -33,6 +35,7 @@ class ContractItemDecorator : IItemDecorator {
         return false
     }
 
+    @EventBusSubscriber(modid = WingsContractsMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = [Dist.CLIENT])
     companion object {
         val instance = ContractItemDecorator()
 
@@ -42,8 +45,12 @@ class ContractItemDecorator : IItemDecorator {
             val abyssalContract = ModItemRegistry.ABYSSAL_CONTRACT.get()
             val boundContract = ModItemRegistry.BOUND_CONTRACT.get()
 
-            if (abyssalContract == null || boundContract == null) {
-                WingsContractsMod.LOGGER.error("Unable to register item decorations: abyssalContract or boundContract could not be found.")
+            if (abyssalContract == null) {
+                WingsContractsMod.LOGGER.error("Unable to register item decorations: abyssalContract could not be found.")
+            }
+
+            if (boundContract == null) {
+                WingsContractsMod.LOGGER.error("Unable to register item decorations: boundContract could not be found.")
             }
 
             event.register(abyssalContract, instance)

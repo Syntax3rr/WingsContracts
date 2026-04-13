@@ -15,7 +15,6 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.Containers
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
 import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
@@ -82,77 +81,37 @@ class ContractPortalBlock(properties: Properties) : BaseEntityBlock(properties) 
                 ) {
                     MenuRegistry.openMenu(player, blockEntity)
                     return ItemInteractionResult.CONSUME
+                } else {
+                    return ItemInteractionResult.SUCCESS
                 }
-
-                return ItemInteractionResult.SUCCESS
             }
 
             portal.contractSlot = itemInHand
             player.setItemInHand(interactionHand, contractSlotItem)
             level.setBlockAndUpdate(blockPos, blockState.setValue(MODE, ContractPortalMode.LIT))
-
             level.playSound(null, blockPos, ModSoundRegistry.PORTAL_ADD_CONTRACT.get(), SoundSource.BLOCKS)
-            level.gameEvent(player, GameEvent.BLOCK_CHANGE, blockPos)
-            level.sendBlockUpdated(blockPos, blockState, blockState, UPDATE_ALL)
-
-            return ItemInteractionResult.SUCCESS
-        }
-
-        return ItemInteractionResult.FAIL
-    }
-
-    override fun useWithoutItem(
-        blockState: BlockState,
-        level: Level,
-        blockPos: BlockPos,
-        player: Player,
-        blockHitResult: BlockHitResult
-    ): InteractionResult {
-        if (level.isClientSide) {
-            return InteractionResult.SUCCESS
-        }
-
-        if (blockState.getValue(MODE) == ContractPortalMode.COIN) {
-            return InteractionResult.FAIL;
-        }
-
-        val portal = level.getBlockEntity(blockPos) as? ContractPortalBlockEntity
-            ?: return InteractionResult.FAIL
-
-        val contractSlotItem = portal.contractSlot
-
-        portal.lastPlayer = player.uuid
-
-        if (contractSlotItem.isEmpty) {
-            val blockEntity = level.getBlockEntity(blockPos)
-            if (player is ServerPlayer
-                && blockEntity is ContractPortalBlockEntity
-                && ModConfig.SERVER.abyssalContractsPoolOptions.get() != 0
-            ) {
-                MenuRegistry.openMenu(player, blockEntity)
-                return InteractionResult.CONSUME
+        } else {
+            if (!itemInHand.isEmpty) {
+                return ItemInteractionResult.FAIL
             }
 
-            return InteractionResult.SUCCESS
+            portal.contractSlot = ItemStack.EMPTY
+            player.setItemInHand(interactionHand, contractSlotItem)
+            level.setBlockAndUpdate(
+                blockPos, blockState.setValue(
+                    MODE, if (!portal.cachedRewards.isEmpty || !portal.inputItemsEmpty) {
+                        ContractPortalMode.COIN
+                    } else {
+                        ContractPortalMode.UNLIT
+                    }
+                )
+            )
+            level.playSound(null, blockPos, ModSoundRegistry.PORTAL_REMOVE_CONTRACT.get(), SoundSource.BLOCKS)
         }
 
-        portal.contractSlot = ItemStack.EMPTY
-        player.setItemInHand(player.usedItemHand, contractSlotItem)
-        level.setBlockAndUpdate(
-            blockPos, blockState.setValue(
-                MODE, if (!portal.cachedRewards.isEmpty || !portal.inputItemsEmpty) {
-                    ContractPortalMode.COIN
-                } else {
-                    ContractPortalMode.UNLIT
-                }
-            )
-        )
-
-        level.playSound(null, blockPos, ModSoundRegistry.PORTAL_REMOVE_CONTRACT.get(), SoundSource.BLOCKS)
         level.gameEvent(player, GameEvent.BLOCK_CHANGE, blockPos)
         level.sendBlockUpdated(blockPos, blockState, blockState, UPDATE_ALL)
-
-        return InteractionResult.SUCCESS
+        return ItemInteractionResult.SUCCESS
     }
 
     override fun getShape(

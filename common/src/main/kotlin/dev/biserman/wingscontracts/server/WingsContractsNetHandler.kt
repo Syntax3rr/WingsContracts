@@ -12,7 +12,7 @@ object WingsContractsNetHandler {
         SyncAvailableContractsPacket::handle
     )
     val CREATE_BOUND_CONTRACTS = NetworkManager.registerReceiver(
-        NetworkManager.Side.S2C,
+        NetworkManager.Side.C2S,
         CreateBoundContractsPacket.PACKET_ID,
         CreateBoundContractsPacket.PACKET_CODEC,
         CreateBoundContractsPacket::handle

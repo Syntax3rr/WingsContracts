@@ -142,8 +142,7 @@ class ContractPortalBlockEntity(
             if (!itemStack.isEmpty) {
                 val slotTag = CompoundTag()
                 slotTag.putByte("Slot", i.toByte())
-                itemStack.save(provider, slotTag)
-                listTag.add(slotTag)
+                listTag.add(itemStack.save(provider, slotTag))
             }
         }
 
@@ -162,8 +161,7 @@ class ContractPortalBlockEntity(
 
         if (contractSlot != ItemStack.EMPTY) {
             val contractSlotTag = CompoundTag()
-            contractSlot.save(provider, contractSlotTag)
-            compoundTag.put("ContractSlot", contractSlotTag)
+            compoundTag.put("ContractSlot", contractSlot.save(provider, contractSlotTag))
         }
 
         val cachedInputsTag = saveAllItems(cachedInput.items, provider)
@@ -309,10 +307,7 @@ class ContractPortalBlockEntity(
                         return true
                     }
 
-                    val linkedPortal = contract.getLinkedPortal(level)
-                    if (linkedPortal == null) {
-                        return false
-                    }
+                    val linkedPortal = contract.getLinkedPortal(level) ?: return false
 
                     if (linkedPortal.lastPlayer == portal.lastPlayer
                         && ModConfig.SERVER.boundContractRequiresTwoPlayers.get()
@@ -453,10 +448,7 @@ class ContractPortalBlockEntity(
     }
 
     private fun tryConsume(contract: Contract, contractTag: ContractTag): Boolean {
-        val level = this.level
-        if (level == null) {
-            return false
-        }
+        val level = this.level ?: return false
 
         if (isPowered) {
             return false
@@ -547,7 +539,7 @@ class ContractPortalBlockEntity(
 
     override fun removeItem(i: Int, count: Int) = removeItem(i, count, false)
     fun removeItem(i: Int, count: Int, simulate: Boolean = false): ItemStack {
-        if (i < 0 || i >= containerSize || count <= 0) {
+        if (i !in 0..<containerSize || count <= 0) {
             return ItemStack.EMPTY
         }
 
@@ -569,7 +561,7 @@ class ContractPortalBlockEntity(
     }
 
     override fun removeItemNoUpdate(i: Int): ItemStack {
-        if (i < 0 || i >= containerSize) {
+        if (i !in 0..<containerSize) {
             return ItemStack.EMPTY
         }
 
