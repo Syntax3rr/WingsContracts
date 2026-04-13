@@ -45,7 +45,7 @@ side = "BOTH"
 [[dependencies.wingscontracts]]
 modId = "create"
 type="optional"
-versionRange = "[${create_version}]"
+versionRange = "${create_version_range}"
 ordering = "AFTER"
 side = "BOTH"
 

@@ -18,7 +18,7 @@ class ContractItemDecorator : IItemDecorator {
         graphics: GuiGraphics, font: Font, itemStack: ItemStack, x: Int, y: Int
     ): Boolean {
         val minecraft = Minecraft.getInstance()
-        val showItem = Contract.Companion.getDisplayItem(itemStack, minecraft.level?.gameTime?.toFloat() ?: 0f)
+        val showItem = Contract.getDisplayItem(itemStack, minecraft.level?.gameTime?.toFloat() ?: 0f)
         if (showItem.isEmpty) {
             return false
         }

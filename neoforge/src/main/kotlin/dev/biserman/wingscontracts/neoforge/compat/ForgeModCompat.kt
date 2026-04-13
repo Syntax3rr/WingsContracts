@@ -63,5 +63,9 @@ object ForgeModCompat {
                 }
             }
         }
+
+        if (Platform.isModLoaded(CompatMods.COMPUTERCRAFT)) {
+            modBus.addListener(ModPeripheralProvider::registerCapability)
+        }
     }
 }
