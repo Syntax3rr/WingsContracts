@@ -16,7 +16,8 @@
     "frame": "goal",
     "hidden": false,
     "icon": {
-      "item": "wingscontracts:star"
+      "id": "wingscontracts:star",
+      "count": 1
     },
     "show_toast": true,
     "title": {

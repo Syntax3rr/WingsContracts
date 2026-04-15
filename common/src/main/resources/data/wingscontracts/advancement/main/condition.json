@@ -16,7 +16,8 @@
     "frame": "goal",
     "hidden": false,
     "icon": {
-      "item": "wingscontracts:question_mark"
+      "id": "wingscontracts:question_mark",
+      "count": 1
     },
     "show_toast": true,
     "title": {

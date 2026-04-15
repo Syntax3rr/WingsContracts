@@ -16,7 +16,8 @@
     "frame": "task",
     "hidden": false,
     "icon": {
-      "item": "wingscontracts:abyssal_contract"
+      "id": "wingscontracts:abyssal_contract",
+      "count": 1
     },
     "show_toast": true,
     "title": {

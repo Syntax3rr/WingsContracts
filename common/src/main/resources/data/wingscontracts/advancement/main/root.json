@@ -20,7 +20,8 @@
     "frame": "task",
     "hidden": false,
     "icon": {
-      "item": "wingscontracts:contract_portal"
+      "id": "wingscontracts:contract_portal",
+      "count": 1
     },
     "show_toast": true,
     "title": {
