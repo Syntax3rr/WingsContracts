@@ -16,7 +16,8 @@
     }
   ],
   "result": {
-    "item": "wingscontracts:blank_bound_contract"
+    "id": "wingscontracts:blank_bound_contract",
+    "count": 1
   },
   "show_notification": true
 }

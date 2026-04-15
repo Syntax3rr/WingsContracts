@@ -13,12 +13,13 @@
     }
   },
   "pattern": [
-    "OOO",
+    " E ",
     "GOG",
-    " E "
+    "OOO"
   ],
   "result": {
-    "item": "wingscontracts:contract_spigot"
+    "id": "wingscontracts:contract_portal",
+    "count": 1
   },
-  "show_notification": false
+  "show_notification": true
 }

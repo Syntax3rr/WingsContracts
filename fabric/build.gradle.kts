@@ -22,9 +22,14 @@ val shadowCommon: Configuration by configurations.creating
 val developmentFabric: Configuration by configurations.getting
 
 configurations {
+    common.isCanBeResolved = true
+    common.isCanBeConsumed = false
     compileOnly.configure { extendsFrom(common) }
     runtimeOnly.configure { extendsFrom(common) }
     developmentFabric.extendsFrom(common)
+
+    shadowCommon.isCanBeResolved = true
+    shadowCommon.isCanBeConsumed = false
 }
 
 base.archivesName = "wingscontracts-fabric"
