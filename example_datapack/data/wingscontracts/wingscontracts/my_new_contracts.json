@@ -14,7 +14,7 @@
     },
     {
       "targetItems": "potion",
-      "targetConditions": "tag.Potion==minecraft:invisibility",
+      "targetConditions": "potionType==minecraft:invisibility",
       "displayItem": {
         "id": "potion",
         "Count": 1,
@@ -33,7 +33,7 @@
       "baseUnitsDemanded": 96
     },
     {
-      "targetConditions": "tag.Enchantments$.*lvl:3.*",
+      "targetConditions": "enchantments<-$.*}=>3[,}].*",
       "reward": 4,
       "countPerUnit": 2,
       "description": "accepts items with a level 3 enchantment"

@@ -7,7 +7,7 @@ import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.item.ContractItem
 import net.minecraft.world.item.ItemStack
 
-object ModItemDetailProvider : DetailProvider<ItemStack> {
+object ComputercraftItemDetailProvider : DetailProvider<ItemStack> {
     override fun provideDetails(details: MutableMap<in String, Any>, itemStack: ItemStack) {
         if (itemStack.item is ContractItem) {
             val contract = LoadedContracts[itemStack] as? AbyssalContract ?: return

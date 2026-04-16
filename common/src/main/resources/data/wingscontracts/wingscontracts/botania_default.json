@@ -121,22 +121,6 @@
       "reward": 3
     },
     {
-      "targetItems": "botania:mana_tablet",
-      "targetConditions": "tag.mana==500000",
-      "countPerUnit": 1,
-      "baseUnitsDemanded": 16,
-      "reward": 48,
-      "name": "wingscontracts.data.botania.filled_mana_tablet",
-      "description": "wingscontracts.data.botania.filled_mana_tablet.desc",
-      "displayItem": {
-        "id": "botania:mana_tablet",
-        "Count": 1,
-        "tag": {
-          "mana": 500000
-        }
-      }
-    },
-    {
       "targetItems": "botania:fel_pumpkin",
       "countPerUnit": 4,
       "reward": 3

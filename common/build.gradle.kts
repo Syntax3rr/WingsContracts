@@ -27,6 +27,7 @@ dependencies {
     modApi("dev.architectury:architectury:${rootProject.property("architectury_version")}")
     modApi("fuzs.forgeconfigapiport:forgeconfigapiport-common-neoforgeapi:${rootProject.property("forgeconfigapiport_version")}")
     val minecraftVersion = rootProject.property("minecraft_version")
+
     val ccTweakedMinecraftVersion = rootProject.property("cc_tweaked_minecraft_version")
     val ccTweakedVersion = rootProject.property("cc_tweaked_version")
     modCompileOnly("cc.tweaked:cc-tweaked-$ccTweakedMinecraftVersion-core-api:$ccTweakedVersion")

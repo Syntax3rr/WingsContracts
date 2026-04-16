@@ -7,7 +7,7 @@
       "requiresAny": "vegandelight"
     },
     {
-      "targetConditions": "tag.Enchantments$.*\\{id:.*\\{id:.*",
+      "targetConditions": "enchantments<-,",
       "reward": 16,
       "countPerUnit": 1,
       "requiresAny": "create_enchantment_industry",
@@ -16,7 +16,7 @@
       "baseUnitsDemanded": 16
     },
     {
-      "targetConditions": "tag.Enchantments$.*lvl:5.*",
+      "targetConditions": "enchantments<-$.*}=>5[,}].*",
       "reward": 16,
       "countPerUnit": 1,
       "requiresAny": "create_enchantment_industry",
@@ -25,7 +25,7 @@
       "baseUnitsDemanded": 16
     },
     {
-      "targetConditions": "tag.Enchantments$.*lvl:6.*",
+      "targetConditions": "enchantments<-$.*}=>6[,}].*",
       "reward": 24,
       "countPerUnit": 1,
       "requiresAll": "create_enchantment_industry,quark",
@@ -35,7 +35,7 @@
     },
     {
       "targetItems": "bow",
-      "targetConditions": "tag.Enchantments<-minecraft:infinity",
+      "targetConditions": "enchantments<-minecraft:infinity",
       "countPerUnit": 1,
       "reward": 16,
       "name": "wingscontracts.data.create_enchantment_industry.infinity_bow",

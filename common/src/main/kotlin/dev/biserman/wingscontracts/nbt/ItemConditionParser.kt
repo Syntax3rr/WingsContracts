@@ -23,12 +23,6 @@ class ItemCondition(val text: String, val match: (ItemStack) -> Boolean) {
 }
 
 object ItemConditionParser {
-    val attributeOperationsMap = mapOf(
-        "add" to AttributeModifier.Operation.ADD_VALUE,
-        "multBase" to AttributeModifier.Operation.ADD_MULTIPLIED_BASE,
-        "multTotal" to AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
-    )
-
     fun parseEntries(text: String): List<String> {
         val entries = mutableListOf<String>()
         var inQuotes = false
@@ -58,6 +52,8 @@ object ItemConditionParser {
         return entries.toList()
     }
 
+    val additionalConditions = mutableMapOf<String, (ItemStack) -> String>()
+
     val navigationRegex = Regex("""(?!\\)\.""")
 
     // navigate recursively down a path of CompoundTags and convert the end value into a String
@@ -73,9 +69,19 @@ object ItemConditionParser {
         return navigate(keyComponents.drop(1), default) { it?.getCompound(keyComponents[0]) }
     }
 
-    private fun (ItemStack).getAttributeValue(attribute: Attribute, operation: AttributeModifier.Operation): Double {
-        val relevantModifiers = this
-            .getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+    private fun (ItemStack).getAttributeValue(
+        attribute: Attribute,
+        operation: AttributeModifier.Operation,
+        default: Boolean
+    ): Double {
+        @Suppress("DEPRECATION")
+        val modifiers = if (default) {
+            this.item.defaultAttributeModifiers
+        } else {
+            this.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY)
+        }
+
+        val relevantModifiers = modifiers
             .modifiers
             .filter { it.attribute.value() == attribute }
             .filter { it.modifier.operation == operation }
@@ -115,7 +121,7 @@ object ItemConditionParser {
                 else -> wrapNavigate("")
             }
 
-            "attribute" -> attribute@ ({
+            "defaultAttribute" -> attribute@ ({
                 it.getAttributeValue(
                     BuiltInRegistries.ATTRIBUTE.get(
                         ResourceLocation.tryParse(
@@ -125,7 +131,30 @@ object ItemConditionParser {
                             ).joinToString(".")
                         )
                     ) ?: return@attribute "0",
-                    attributeOperationsMap[keyComponents[keyComponents.size - 1]] ?: return@attribute "0"
+                    AttributeModifier.Operation.entries
+                        .firstOrNull { operation -> operation.serializedName == keyComponents[keyComponents.size - 1] }
+                        ?: return@attribute "0",
+                    default = true
+                ).toString()
+            })
+
+            "attribute" -> attribute@ ({
+                it.components.get(DataComponents.ATTRIBUTE_MODIFIERS)?.modifiers?.forEach { modifier ->
+                    WingsContractsMod.LOGGER.info("${modifier.attribute.registeredName}, ${modifier.modifier.operation}, ${modifier.modifier.amount}, ${modifier.modifier().id}")
+                }
+                it.getAttributeValue(
+                    BuiltInRegistries.ATTRIBUTE.get(
+                        ResourceLocation.tryParse(
+                            keyComponents.subList(
+                                1,
+                                keyComponents.size - 1
+                            ).joinToString(".")
+                        )
+                    ) ?: return@attribute "0",
+                    AttributeModifier.Operation.entries
+                        .firstOrNull { operation -> operation.serializedName == keyComponents[keyComponents.size - 1] }
+                        ?: return@attribute "0",
+                    default = false
                 ).toString()
             })
 
@@ -170,7 +199,10 @@ object ItemConditionParser {
             "isTool" -> ({ (it.components.get(DataComponents.TOOL) != null).toString() })
             "miningSpeed" -> ({ it.get(DataComponents.TOOL)?.defaultMiningSpeed?.toString() ?: "0.0" })
             "damagePerBlock" -> ({ it.get(DataComponents.TOOL)?.damagePerBlock?.toString() ?: "0" })
-            "enchantments" -> ({ it.get(DataComponents.ENCHANTMENTS)?.enchantments?.toString() ?: "" })
+            "enchantments" -> ({
+                it.get(DataComponents.ENCHANTMENTS)?.enchantments?.toString() ?: ""
+            })
+
             "storedEnchantments" -> ({ it.get(DataComponents.STORED_ENCHANTMENTS)?.enchantments?.toString() ?: "" })
             "dyedColor" -> ({ it.get(DataComponents.DYED_COLOR)?.rgb?.toString(16) ?: "" })
             "hasArmorTrim" -> ({ (it.components.get(DataComponents.TRIM) != null).toString() })
@@ -206,15 +238,15 @@ object ItemConditionParser {
             })
 
             "potionType" -> ({
-                it.get(DataComponents.POTION_CONTENTS)?.potion?.get()?.unwrapKey()?.getOrNull()?.toString() ?: ""
+                it.get(DataComponents.POTION_CONTENTS)?.potion?.get()?.unwrapKey()?.getOrNull()?.location()?.toString()
+                    ?: ""
             })
-
-            else -> throw Error("Condition key not recognized: ${keyComponents[0]}")
+            else -> additionalConditions[keyComponents[0]] ?: throw Error("Condition key not recognized: ${keyComponents[0]}")
         }
 
         val fetchItemValue: (ItemStack) -> String = {
             val itemValue = fetchItemValue2(it)
-            WingsContractsMod.LOGGER.debug(itemValue)
+            WingsContractsMod.LOGGER.info("Condition $condition evaluated to $itemValue")
             itemValue
         }
 

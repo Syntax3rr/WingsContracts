@@ -319,7 +319,7 @@
     },
     {
       "targetTags": "#minecraft:swords",
-      "targetConditions": "attribute.minecraft:generic.attack_damage.add>=6.0",
+      "targetConditions": "defaultAttribute.minecraft:generic.attack_damage.add_value>=5.0",
       "countPerUnit": 4,
       "reward": 2,
       "baseUnitsDemanded": 96,
@@ -577,12 +577,14 @@
     },
     {
       "targetItems": "potion",
-      "targetConditions": "tag.Potion==minecraft:healing",
+      "targetConditions": "potionEffects<-instant_health",
       "displayItem": {
         "id": "potion",
         "Count": 1,
-        "tag": {
-          "Potion": "minecraft:healing"
+        "components": {
+          "minecraft:potion_contents": {
+            "potion": "minecraft:healing"
+          }
         }
       },
       "countPerUnit": 8,
@@ -591,12 +593,14 @@
     },
     {
       "targetItems": "potion",
-      "targetConditions": "tag.Potion==minecraft:fire_resistance",
+      "targetConditions": "potionEffects<-fire_resistance",
       "displayItem": {
         "id": "potion",
         "Count": 1,
-        "tag": {
-          "Potion": "minecraft:fire_resistance"
+        "components": {
+          "minecraft:potion_contents": {
+            "potion": "minecraft:fire_resistance"
+          }
         }
       },
       "countPerUnit": 8,
@@ -605,12 +609,14 @@
     },
     {
       "targetItems": "potion",
-      "targetConditions": "tag.Potion==minecraft:night_vision",
+      "targetConditions": "potionEffects<-night_vision",
       "displayItem": {
         "id": "potion",
         "Count": 1,
-        "tag": {
-          "Potion": "minecraft:night_vision"
+        "components": {
+          "minecraft:potion_contents": {
+            "potion": "minecraft:night_vision"
+          }
         }
       },
       "countPerUnit": 8,
@@ -695,7 +701,7 @@
     },
     {
       "targetItems": "potion",
-      "targetConditions": "tag.Potion!=minecraft:water;tag.Potion!=minecraft:awkward;tag.Potion!=minecraft:thick;tag.Potion!=minecraft:mundane",
+      "targetConditions": "potionType!=minecraft:water;potionType!=minecraft:awkward;potionType!=minecraft:thick;potionType!=minecraft:mundane",
       "countPerUnit": 8,
       "reward": 8,
       "baseUnitsDemanded": 16,
