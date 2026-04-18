@@ -17,7 +17,9 @@ subprojects {
 
     val loom = project.extensions.getByName<LoomGradleExtensionAPI>("loom")
 
+    // comment out the line below to build for neoforge
     loom.silentMojangMappingsLicense()
+
     loom.noIntermediateMappings()
 
     dependencies {
