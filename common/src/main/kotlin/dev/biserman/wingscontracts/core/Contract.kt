@@ -372,7 +372,7 @@ abstract class Contract(
                 return null
             }
             set(value) {
-                targetItemKeys = value?.mapNotNull { it.`arch$registryName`()?.toString() }
+                targetItemKeys = value?.mapNotNull { BuiltInRegistries.ITEM.getKey(it)?.toString() }
             }
 
 

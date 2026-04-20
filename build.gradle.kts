@@ -16,11 +16,7 @@ subprojects {
     apply(plugin = "dev.architectury.loom")
 
     val loom = project.extensions.getByName<LoomGradleExtensionAPI>("loom")
-
-    // comment out the line below to build for neoforge
     loom.silentMojangMappingsLicense()
-
-    loom.noIntermediateMappings()
 
     dependencies {
         "minecraft"("com.mojang:minecraft:${project.property("minecraft_version")}")

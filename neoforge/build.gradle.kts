@@ -9,6 +9,7 @@ architectury {
 
 loom {
     accessWidenerPath.set(project(":common").loom.accessWidenerPath)
+    noIntermediateMappings()
 }
 
 val common: Configuration by configurations.creating

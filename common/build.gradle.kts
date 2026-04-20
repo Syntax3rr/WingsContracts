@@ -15,9 +15,9 @@ loom {
     accessWidenerPath = file("src/main/resources/wingscontracts.accesswidener")
 }
 
-//tasks.named("remapJar") {
-//    enabled = false
-//}
+tasks.named("remapJar") {
+    enabled = false
+}
 
 dependencies {
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
