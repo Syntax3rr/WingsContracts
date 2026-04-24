@@ -13,6 +13,7 @@ import dev.biserman.wingscontracts.core.Contract.Companion.targetItems
 import dev.biserman.wingscontracts.data.ContractSavedData.Companion.random
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.Reward
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import kotlin.math.max
@@ -66,7 +67,7 @@ class AbyssalContractGenerator(val data: ContractSavedData) {
 
                     // skip contracts that are on the reward blocklist
                     if (ContractDataReloadListener.data.rewardBlocklist
-                            .contains(otherContractItem.`arch$registryName`().toString())
+                            .contains(BuiltInRegistries.ITEM.getKey(otherContractItem)?.toString() ?: "")
                     ) {
                         continue
                     }
