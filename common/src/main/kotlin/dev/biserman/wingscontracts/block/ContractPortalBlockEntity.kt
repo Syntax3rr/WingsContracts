@@ -8,7 +8,7 @@ import dev.biserman.wingscontracts.block.ContractPortalBlock.Companion.MODE
 import dev.biserman.wingscontracts.block.state.properties.ContractPortalMode
 import dev.biserman.wingscontracts.config.ModConfig
 import dev.biserman.wingscontracts.container.CompactingContainer
-import dev.biserman.wingscontracts.core.AbyssalContract
+import dev.biserman.wingscontracts.core.ServerContract
 import dev.biserman.wingscontracts.core.BoundContract
 import dev.biserman.wingscontracts.core.Contract
 import dev.biserman.wingscontracts.core.PortalLinker
@@ -248,7 +248,7 @@ class ContractPortalBlockEntity(
                     val didSuck = portal.suckInItems(contract, level)
                     val didUpdate = contract.tryUpdateTick(contractTag)
 
-                    if (didConsume && contract is AbyssalContract && contract.isComplete) {
+                    if (didConsume && contract is ServerContract && contract.isComplete) {
                         playSound(level, blockPos, ModSoundRegistry.COMPLETE_CONTRACT.get())
                     }
 
@@ -465,7 +465,7 @@ class ContractPortalBlockEntity(
         }
 
         val serverLevel = level as? ServerLevel
-        if (contract is AbyssalContract && serverLevel != null) {
+        if (contract is ServerContract && serverLevel != null) {
             val player = serverLevel.getPlayerByUUID(lastPlayer) as? ServerPlayer
             if (player == null) {
                 WingsContractsMod.LOGGER.warn("Contract Portal $blockPos could not find last player with UUID $lastPlayer")

@@ -2,10 +2,10 @@ package dev.biserman.wingscontracts.data
 
 import dev.biserman.wingscontracts.config.ModConfig
 import dev.biserman.wingscontracts.core.AbyssalContract
-import dev.biserman.wingscontracts.core.AbyssalContract.Companion.baseUnitsDemanded
-import dev.biserman.wingscontracts.core.AbyssalContract.Companion.currentCycleStart
-import dev.biserman.wingscontracts.core.AbyssalContract.Companion.reward
 import dev.biserman.wingscontracts.core.Contract.Companion.countPerUnit
+import dev.biserman.wingscontracts.core.ServerContract.Companion.baseUnitsDemanded
+import dev.biserman.wingscontracts.core.ServerContract.Companion.currentCycleStart
+import dev.biserman.wingscontracts.core.ServerContract.Companion.reward
 import dev.biserman.wingscontracts.core.Contract.Companion.rarity
 import dev.biserman.wingscontracts.core.Contract.Companion.startTime
 import dev.biserman.wingscontracts.core.Contract.Companion.targetConditions

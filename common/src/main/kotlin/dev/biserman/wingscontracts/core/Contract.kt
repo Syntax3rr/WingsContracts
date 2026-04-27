@@ -40,7 +40,6 @@ fun <T> (TagKey<T>).name(): String {
 
 @Suppress("MemberVisibilityCanBePrivate")
 abstract class Contract(
-    val type: Int = 0,
     val id: UUID = UUID.randomUUID(),
     val targetItems: List<Item> = listOf(),
     val targetTags: List<TagKey<Item>> = listOf(),
@@ -59,6 +58,8 @@ abstract class Contract(
     val displayItem: ItemStack? = null,
     val rarity: Int? = null
 ) {
+    abstract val type: ContractType
+
     fun matches(itemStack: ItemStack): Boolean {
         // fail to match everything when disabled
         if (isDisabled) {
@@ -213,7 +214,7 @@ abstract class Contract(
         components.addAll(getBasicInfo(null))
 
 
-        if (this is AbyssalContract) {
+        if (this is ServerContract) {
             components.addAll(getCycleInfo())
         }
 
@@ -336,7 +337,11 @@ abstract class Contract(
     abstract val details: MutableMap<String, Any?>
 
     companion object {
-        var (ContractTag).type by int()
+        var (ContractTag).type: ContractType?
+            get() = if (tag.contains("type")) ContractType.fromId(tag.getInt("type")) else null
+            set(value) {
+                if (value != null) tag.putInt("type", value.id)
+            }
         var (ContractTag).id by uuid()
 
         var (ContractTag).targetItemKeys by csv("targetItems")

@@ -2,8 +2,8 @@ package dev.biserman.wingscontracts.command
 
 import com.mojang.brigadier.builder.ArgumentBuilder
 import dev.biserman.wingscontracts.WingsContractsMod
-import dev.biserman.wingscontracts.core.AbyssalContract
 import dev.biserman.wingscontracts.core.Contract
+import dev.biserman.wingscontracts.core.ServerContract
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.network.chat.Component
@@ -30,7 +30,7 @@ object ModCommand {
             return 0
         }
 
-        if (contract is AbyssalContract) {
+        if (contract is ServerContract) {
             contract.initialize()
         }
 

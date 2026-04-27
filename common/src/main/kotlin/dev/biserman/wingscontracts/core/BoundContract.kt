@@ -51,7 +51,6 @@ class BoundContract(
 
     val matchingContractId: UUID,
 ) : Contract(
-    2,
     id,
     targetItems,
     targetTags,
@@ -67,6 +66,7 @@ class BoundContract(
     null,
     null
 ) {
+    override val type get() = ContractType.BOUND
     override val item: Item get() = ModItemRegistry.BOUND_CONTRACT.get()
     override fun getDisplayName(rarity: Int): MutableComponent {
         val nameString = Component.translatable(name ?: targetName).string

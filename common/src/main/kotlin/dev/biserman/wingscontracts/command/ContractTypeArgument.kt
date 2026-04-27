@@ -7,14 +7,9 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import dev.biserman.wingscontracts.WingsContractsMod
-import dev.biserman.wingscontracts.core.AbyssalContract
-import dev.biserman.wingscontracts.core.BoundContract
-import dev.biserman.wingscontracts.core.Contract
-import dev.biserman.wingscontracts.data.ContractSavedData
-import dev.biserman.wingscontracts.nbt.ContractTag
+import dev.biserman.wingscontracts.core.ContractType
 import net.minecraft.commands.SharedSuggestionProvider
 import net.minecraft.network.chat.Component
-import net.minecraft.world.level.Level
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
@@ -40,10 +35,7 @@ class ContractTypeArgument : ArgumentType<String> {
     override fun getExamples() = options.keys
 
     companion object {
-        val options = mapOf<String, (Level, ContractTag) -> Contract>(
-            "abyssal" to { level, tag -> AbyssalContract.load(tag, ContractSavedData.get(level)) },
-            "bound" to { level, tag -> BoundContract.load(tag) }
-        )
+        val options = ContractType.entries.associateBy { it.name.lowercase() }
 
         private val ERROR_INVALID: DynamicCommandExceptionType = DynamicCommandExceptionType(Function {
             Component.translatable(

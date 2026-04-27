@@ -1,9 +1,9 @@
 package dev.biserman.wingscontracts.item
 
 import dev.biserman.wingscontracts.WingsContractsMod
-import dev.biserman.wingscontracts.core.AbyssalContract
-import dev.biserman.wingscontracts.core.AbyssalContract.Companion.currentCycleStart
 import dev.biserman.wingscontracts.core.Contract.Companion.unitsFulfilledEver
+import dev.biserman.wingscontracts.core.ServerContract
+import dev.biserman.wingscontracts.core.ServerContract.Companion.currentCycleStart
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
 import net.minecraft.ChatFormatting
@@ -58,7 +58,7 @@ class ContractItem(properties: Properties) : Item(properties) {
         if (level is ServerLevel) {
             contract.tryUpdateTick(contractTag)
         } else if (contract.unitsFulfilledEver != contractTag.unitsFulfilledEver
-            || (contract is AbyssalContract && contract.currentCycleStart != contractTag.currentCycleStart)) {
+            || (contract is ServerContract && contract.currentCycleStart != contractTag.currentCycleStart)) {
             // this is a cheap check to invalidate the cache and avoid certain sync issues
             LoadedContracts.invalidate(contract.id)
         }
@@ -67,7 +67,7 @@ class ContractItem(properties: Properties) : Item(properties) {
     override fun isBarVisible(itemStack: ItemStack): Boolean {
         val contract = LoadedContracts[itemStack] ?: return false
 
-        if (contract is AbyssalContract) {
+        if (contract is ServerContract) {
             val isZeroWidth = getBarWidth(itemStack) == 0
             val isExpired = System.currentTimeMillis() > contract.currentCycleStart + contract.cycleDurationMs
             return !isZeroWidth && !isExpired
@@ -78,7 +78,7 @@ class ContractItem(properties: Properties) : Item(properties) {
 
     override fun getBarWidth(itemStack: ItemStack): Int {
         val contract = LoadedContracts[itemStack] ?: return 0
-        if (contract is AbyssalContract) {
+        if (contract is ServerContract) {
             val unitsFulfilled = contract.unitsFulfilled.toFloat()
             val unitsDemanded = contract.unitsDemanded.toFloat()
 
