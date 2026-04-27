@@ -276,7 +276,7 @@ abstract class Contract(
         return matchingCount / countPerUnit
     }
 
-    abstract fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): List<ItemStack>
+    abstract fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): ConsumeResult
 
     open fun consumeUnits(unitCount: Int, portal: ContractPortalBlockEntity): List<ItemStack> {
         val goalAmount = unitCount * countPerUnit

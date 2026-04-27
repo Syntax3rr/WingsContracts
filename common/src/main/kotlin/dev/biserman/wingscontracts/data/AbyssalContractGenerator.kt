@@ -139,10 +139,10 @@ class AbyssalContractGenerator(val data: ContractSavedData) {
         }
 
         val lastFit = ContractDataReloadListener.data.defaultRewards.lastOrNull { getCount(it, value) >= 1 }
-        return if (lastFit == null) {
-            ContractDataReloadListener.data.defaultRewards.minBy { it.value }.item.copy()
-        } else {
+        if (lastFit != null) {
             return lastFit.item.copyWithCount(lastFit.item.count * getCount(lastFit, value))
         }
+        val cheapest = ContractDataReloadListener.data.defaultRewards.minByOrNull { it.value }
+        return cheapest?.item?.copy() ?: ContractSavedData.FALLBACK_REWARD.item.copy()
     }
 }

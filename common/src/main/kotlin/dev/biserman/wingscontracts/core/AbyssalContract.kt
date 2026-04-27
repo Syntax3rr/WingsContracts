@@ -58,7 +58,7 @@ class AbyssalContract(
     displayItem: ItemStack?,
     rarity: Int?,
 
-    reward: ItemStack,
+    reward: ContractReward,
 
     level: Int,
     quantityGrowthFactor: Double,
@@ -103,13 +103,14 @@ class AbyssalContract(
     override fun getDisplayName(rarity: Int): MutableComponent {
         val rarityString = Component.translatable("${WingsContractsMod.MOD_ID}.rarity.${rarity}").string
         val nameString = Component.translatable(name ?: targetName).string
-        val numeralString = Component.translatable("enchantment.level.$level").string
+        val effectiveLevel = if (willCapBeforeLevelUp && maxLevel >= 1) maxLevel else level
+        val numeralString = Component.translatable("enchantment.level.$effectiveLevel").string
 
         return Component.translatable(
             "item.${WingsContractsMod.MOD_ID}.contract.abyssal",
             rarityString,
             nameString,
-            if (level > 1) numeralString else ""
+            if (effectiveLevel > 1) numeralString else ""
         )
     }
 
@@ -118,7 +119,7 @@ class AbyssalContract(
 
         val rewardsComponent = translateContract(
             "abyssal.rewards",
-            formatReward(reward.count),
+            reward.formatReward(reward.rewardPerUnit),
             countPerUnit,
         ).withStyle(ChatFormatting.DARK_PURPLE)
 
@@ -143,7 +144,7 @@ class AbyssalContract(
         components.add(
             translateContract(
                 "abyssal.max_reward_cycle",
-                formatReward(unitsDemanded * reward.count),
+                reward.formatReward(unitsDemanded * reward.rewardPerUnit),
             ).withStyle(ChatFormatting.LIGHT_PURPLE)
         )
 
@@ -151,7 +152,7 @@ class AbyssalContract(
             translateContract(
                 "abyssal.max_reward",
                 if (maxLevel <= 0) "∞" else maxLevel.toString(),
-                formatReward(maxPossibleReward)
+                reward.formatReward(maxPossibleReward)
             ).withStyle(ChatFormatting.DARK_PURPLE)
         )
 
@@ -172,13 +173,13 @@ class AbyssalContract(
         "abyssal.short",
         countPerUnit,
         getTargetListComponents(displayShort = true).joinToString("|") { it.string },
-        formatReward(reward.count),
+        reward.formatReward(reward.rewardPerUnit),
         unitsFulfilled,
         unitsDemanded
     ).withStyle(ChatFormatting.DARK_PURPLE)
 
     override fun calculateRarity(data: ContractSavedData, rewardUnitValue: Double): Int {
-        return data.rarityThresholds.indexOfLast { (maxPossibleReward / reward.count) * rewardUnitValue > it } + 1
+        return data.rarityThresholds.indexOfLast { maxUnitsDemanded * rewardUnitValue > it } + 1
     }
 
     override fun addToGoggleTooltip(
@@ -230,7 +231,14 @@ class AbyssalContract(
                         "targetItems" -> targetItems.map { it.defaultInstance.details }
                         "targetTags" -> targetTags.map { "#${it.location}" }
                         "targetBlockTags" -> targetBlockTags.map { "#${it.location}" }
-                        "reward" -> reward.details
+                        "reward" -> when (val r = reward) {
+                            is ContractReward.Items -> r.stack.details
+                            is ContractReward.Commands -> mapOf(
+                                "commands" to r.commands,
+                                "label" to r.label,
+                                "value" to r.value,
+                            )
+                        }
                         else -> prop.get(this)
                     })
             }.toMutableMap()
@@ -259,9 +267,11 @@ class AbyssalContract(
                 displayItem = tag.displayItem,
                 rarity = tag.rarity,
                 reward = when (reward) {
-                    is Reward.Defined -> reward.itemStack
-                    is Reward.Random ->
+                    is Reward.Defined -> ContractReward.Items(reward.itemStack)
+                    is Reward.Random -> ContractReward.Items(
                         data?.generator?.getRandomReward(reward.value) ?: ContractSavedData.FALLBACK_REWARD.item
+                    )
+                    is Reward.Commands -> ContractReward.Commands(reward.commands, reward.label, reward.value)
                 },
                 level = tag.level ?: 1,
                 quantityGrowthFactor = tag.quantityGrowthFactor

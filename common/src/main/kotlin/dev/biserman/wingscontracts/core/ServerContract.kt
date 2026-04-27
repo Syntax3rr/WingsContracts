@@ -2,7 +2,6 @@ package dev.biserman.wingscontracts.core
 
 import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.config.GrowthFunctionOptions
-import dev.biserman.wingscontracts.data.ContractDataReloadListener
 import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.boolean
@@ -11,22 +10,20 @@ import dev.biserman.wingscontracts.nbt.ContractTagHelper.int
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.long
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.reward
 import dev.biserman.wingscontracts.nbt.ItemCondition
-import dev.biserman.wingscontracts.nbt.Reward
-import dev.biserman.wingscontracts.util.ComponentHelper.trimBrackets
 import dev.biserman.wingscontracts.util.DenominationsHelper
 import net.minecraft.ChatFormatting
 import net.minecraft.core.NonNullList
-import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.tags.TagKey
-import net.minecraft.util.Mth
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Block
+import net.minecraft.world.phys.Vec3
 import java.util.*
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -56,7 +53,7 @@ abstract class ServerContract(
     displayItem: ItemStack?,
     rarity: Int?,
 
-    val reward: ItemStack,
+    val reward: ContractReward,
 
     var level: Int,
     val quantityGrowthFactor: Double,
@@ -87,8 +84,12 @@ abstract class ServerContract(
 
     abstract fun calculateRarity(data: ContractSavedData, rewardUnitValue: Double): Int
 
-    override val rewardPerUnit get() = reward.count
+    override val rewardPerUnit get() = reward.rewardPerUnit
     override val isComplete get() = unitsFulfilled >= unitsDemanded
+
+    /** True when `maxFulfilments` is set so low that the contract will deactivate before completing the current cycle (no level-up possible). */
+    val willCapBeforeLevelUp: Boolean
+        get() = maxFulfilments in 1..unitsDemanded
 
     val unitsDemanded: Int get() = unitsDemandedAtLevel(level)
 
@@ -111,22 +112,23 @@ abstract class ServerContract(
     val cyclesPassed get() = ((System.currentTimeMillis() - currentCycleStart) / cycleDurationMs).toInt()
     val newCycleStart get() = currentCycleStart + cycleDurationMs * cyclesPassed
 
-    val maxPossibleReward: Int
+    val maxUnitsDemanded: Int
         get() {
             if (maxLevel <= 0) {
                 val compare = unitsDemandedAtLevel(1).compareTo(unitsDemandedAtLevel(2))
                 return when {
                     compare < 0 -> Int.MAX_VALUE
-                    compare == 0 -> unitsDemandedAtLevel(1) * reward.count
-                    else -> reward.count
+                    compare == 0 -> unitsDemandedAtLevel(1)
+                    else -> 1
                 }
             }
-            val maxUnitsDemanded = max(unitsDemandedAtLevel(1), unitsDemandedAtLevel(maxLevel))
-            return maxUnitsDemanded * reward.count
+            return max(unitsDemandedAtLevel(1), unitsDemandedAtLevel(maxLevel))
         }
 
+    val maxPossibleReward: Int get() = maxUnitsDemanded * reward.rewardPerUnit
+
     val isValid: Boolean
-        get() = reward.item != Items.AIR
+        get() = reward.isValid
                 && (targetItems.any { it != Items.AIR }
                 || targetTags.any()
                 || targetBlockTags.any()
@@ -199,67 +201,41 @@ abstract class ServerContract(
         tag?.currentCycleStart = currentCycleStart
     }
 
-    override fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): List<ItemStack> {
+    override fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): ConsumeResult {
+        val serverLevel = portal.level as? ServerLevel ?: return ConsumeResult.NONE
         val unitCount = countConsumableUnits(portal.cachedInput.items)
         if (unitCount == 0 || expiresIn == 0) {
-            return listOf()
+            return ConsumeResult.NONE
         }
 
         val consumedUnits = consumeUnits(unitCount, portal)
-        SpigotLinker.get(portal.level ?: return listOf()).spitItems(consumedUnits)
+        SpigotLinker.get(serverLevel).spitItems(consumedUnits)
 
         recordFulfilment(unitCount, tag)
 
         unitsFulfilled += unitCount
         tag.unitsFulfilled = unitsFulfilled
 
-        return getRewardsForUnits(unitCount)
+        val ctx = RewardContext(
+            level = serverLevel,
+            executor = serverLevel.getPlayerByUUID(portal.lastPlayer) as? ServerPlayer,
+            pos = Vec3.atBottomCenterOf(portal.blockPos),
+        )
+        val outcome = reward.apply(unitCount, ctx)
+        return ConsumeResult(outcome.items, unitCount, outcome.scoreboardValue)
     }
 
-    fun getRewardsForUnits(units: Int): List<ItemStack> {
-        val fullStackCount = Mth.floor(reward.count * units.toDouble() / reward.maxStackSize)
-        val remainder = reward.count * units % reward.maxStackSize
-        val fullStacks = (1..fullStackCount).map { reward.copyWithCount(reward.maxStackSize) }
-        return if (remainder == 0) fullStacks else fullStacks + reward.copyWithCount(remainder)
-    }
-
-    fun formatReward(count: Int): String {
-        val rewardEntry =
-            ContractDataReloadListener.data.defaultRewards.firstOrNull { it.item.item == reward.item }
-        if (rewardEntry?.formatString != null) {
-            return String.format(rewardEntry.formatString, count)
-        }
-
-        val trimmed = reward.displayName.string.trimBrackets()
-        return when {
-            reward.has(DataComponents.STORED_ENCHANTMENTS) -> {
-                val enchantments = reward.get(DataComponents.STORED_ENCHANTMENTS)?.entrySet()?.mapNotNull { kvp ->
-                    val resourceLocation = kvp.key.unwrapKey().getOrNull()?.location() ?: return@mapNotNull null
-                    val enchantmentLevel = kvp.intValue
-                    val name =
-                        Component.translatable("enchantment.${resourceLocation.namespace}.${resourceLocation.path}").string
-                    val levelString = Component.translatable("enchantment.level.$enchantmentLevel").string
-                    "$name $levelString"
-                } ?: listOf()
-
-                translateContract(
-                    "enchanted_book_format",
-                    count,
-                    enchantments.joinToString(" + "),
-                    trimmed
-                ).string
-            }
-
-            reward.isEnchanted -> translateContract("enchanted_reward_format", count, trimmed).string
-            else -> "$count $trimmed"
-        }
-    }
+    fun formatReward(count: Int): String = reward.formatReward(count)
 
     fun getCycleInfo(): MutableList<Component> {
         val components = mutableListOf<Component>()
 
         if (isDisabled) {
             components.add(translateContract("disabled").withStyle(ChatFormatting.GRAY))
+            return components
+        }
+
+        if (willCapBeforeLevelUp) {
             return components
         }
 
@@ -294,7 +270,7 @@ abstract class ServerContract(
         tag.baseUnitsDemanded = baseUnitsDemanded
         tag.unitsFulfilled = unitsFulfilled
         tag.expiresIn = expiresIn
-        tag.reward = Reward.Defined(reward)
+        tag.reward = reward.toTagReward()
         tag.level = level
         tag.quantityGrowthFactor = quantityGrowthFactor
         tag.maxLevel = maxLevel

@@ -66,26 +66,24 @@ class ContractItem(properties: Properties) : Item(properties) {
 
     override fun isBarVisible(itemStack: ItemStack): Boolean {
         val contract = LoadedContracts[itemStack] ?: return false
-
-        if (contract is ServerContract) {
-            val isZeroWidth = getBarWidth(itemStack) == 0
-            val isExpired = System.currentTimeMillis() > contract.currentCycleStart + contract.cycleDurationMs
-            return !isZeroWidth && !isExpired
-        } else {
-            return false
+        if (getBarWidth(itemStack) == 0) return false
+        if (contract is ServerContract && !contract.willCapBeforeLevelUp) {
+            return System.currentTimeMillis() <= contract.currentCycleStart + contract.cycleDurationMs
         }
+        return true
     }
 
     override fun getBarWidth(itemStack: ItemStack): Int {
         val contract = LoadedContracts[itemStack] ?: return 0
-        if (contract is ServerContract) {
-            val unitsFulfilled = contract.unitsFulfilled.toFloat()
-            val unitsDemanded = contract.unitsDemanded.toFloat()
-
-            return ceil(unitsFulfilled * 13.0f / unitsDemanded).toInt()
-        } else {
-            return 0
+        val (filled, total) = when {
+            contract is ServerContract && !contract.willCapBeforeLevelUp ->
+                contract.unitsFulfilled.toFloat() to contract.unitsDemanded.toFloat()
+            contract.maxFulfilments > 0 ->
+                contract.unitsFulfilledEver.toFloat() to contract.maxFulfilments.toFloat()
+            else -> return 0
         }
+        if (total <= 0f) return 0
+        return ceil(filled * 13.0f / total).toInt()
     }
 
     override fun getBarColor(itemStack: ItemStack): Int = 0xff55ff

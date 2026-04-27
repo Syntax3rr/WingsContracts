@@ -454,13 +454,13 @@ class ContractPortalBlockEntity(
             return false
         }
 
-        val rewards = contract.tryConsumeFromItems(contractTag, this)
+        val result = contract.tryConsumeFromItems(contractTag, this)
 
-        if (rewards.isEmpty()) {
+        if (result.unitsConsumed == 0) {
             return false
         }
 
-        for (itemStack in rewards) {
+        for (itemStack in result.items) {
             cachedRewards.addItem(itemStack)
         }
 
@@ -470,11 +470,7 @@ class ContractPortalBlockEntity(
             if (player == null) {
                 WingsContractsMod.LOGGER.warn("Contract Portal $blockPos could not find last player with UUID $lastPlayer")
             } else {
-                ScoreboardHandler.add(
-                    serverLevel,
-                    player,
-                    rewards.sumOf { floor(ContractDataReloadListener.data.valueReward(it)) }
-                )
+                ScoreboardHandler.add(serverLevel, player, result.scoreboardValue.toInt())
 
                 if (contract.unitsFulfilled >= contract.unitsDemanded) {
                     ContractCompleteTrigger.INSTANCE.trigger(player, contractSlot)

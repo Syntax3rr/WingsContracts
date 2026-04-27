@@ -6,6 +6,7 @@ import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.block.state.properties.ContractPortalMode
 import dev.biserman.wingscontracts.compat.computercraft.DetailsHelper.details
 import dev.biserman.wingscontracts.config.ModConfig
+import dev.biserman.wingscontracts.data.ContractDataReloadListener
 import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTag
@@ -132,21 +133,21 @@ class BoundContract(
 
     override val rewardPerUnit get() = otherSideCountPerUnit
 
-    override fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): List<ItemStack> {
-        if (!isActive) return listOf()
+    override fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): ConsumeResult {
+        if (!isActive) return ConsumeResult.NONE
 
-        val otherPortal = PortalLinker.get(portal.level ?: return listOf())
-            .linkedPortals[matchingContractId] ?: return listOf()
-        val otherTag = ContractTagHelper.getContractTag(otherPortal.contractSlot) ?: return listOf()
-        val otherContract = LoadedContracts[otherTag] ?: return listOf()
-        val level = portal.level ?: return listOf()
+        val otherPortal = PortalLinker.get(portal.level ?: return ConsumeResult.NONE)
+            .linkedPortals[matchingContractId] ?: return ConsumeResult.NONE
+        val otherTag = ContractTagHelper.getContractTag(otherPortal.contractSlot) ?: return ConsumeResult.NONE
+        val otherContract = LoadedContracts[otherTag] ?: return ConsumeResult.NONE
+        val level = portal.level ?: return ConsumeResult.NONE
 
         if (ModConfig.SERVER.boundContractRequiresTwoPlayers.get() && portal.lastPlayer == otherPortal.lastPlayer) {
-            return listOf()
+            return ConsumeResult.NONE
         }
 
         if (portal.isPowered || otherPortal.isPowered) {
-            return listOf()
+            return ConsumeResult.NONE
         }
 
         val unitCount = min(
@@ -154,7 +155,7 @@ class BoundContract(
             otherContract.countConsumableUnits(otherPortal.cachedInput.items)
         )
         if (unitCount == 0) {
-            return listOf()
+            return ConsumeResult.NONE
         }
 
         val consumedItems = consumeUnits(unitCount, portal)
@@ -169,7 +170,8 @@ class BoundContract(
         otherContract.recordFulfilment(unitCount, otherTag)
 
         burnSomeItems(otherConsumedItems, level)
-        return otherConsumedItems
+        val score = otherConsumedItems.sumOf { floor(ContractDataReloadListener.data.valueReward(it)) }
+        return ConsumeResult(otherConsumedItems, unitCount, score)
     }
 
     fun burnSomeItems(items: List<ItemStack>, level: Level) {
