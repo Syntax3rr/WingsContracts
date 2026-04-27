@@ -62,7 +62,8 @@ abstract class ServerContract(
     val quantityGrowthFactor: Double,
     val maxLevel: Int,
 
-    var isActive: Boolean,
+    isActive: Boolean,
+    maxFulfilments: Int,
     var isInitialized: Boolean
 ) : Contract(
     id,
@@ -78,14 +79,15 @@ abstract class ServerContract(
     description,
     shortTargetList,
     displayItem,
-    rarity
+    rarity,
+    isActive,
+    maxFulfilments,
 ) {
     abstract val growthFunction: GrowthFunctionOptions
 
     abstract fun calculateRarity(data: ContractSavedData, rewardUnitValue: Double): Int
 
     override val rewardPerUnit get() = reward.count
-    override val isDisabled get() = !isActive
     override val isComplete get() = unitsFulfilled >= unitsDemanded
 
     val unitsDemanded: Int get() = unitsDemandedAtLevel(level)
@@ -206,8 +208,7 @@ abstract class ServerContract(
         val consumedUnits = consumeUnits(unitCount, portal)
         SpigotLinker.get(portal.level ?: return listOf()).spitItems(consumedUnits)
 
-        unitsFulfilledEver += unitCount
-        tag.unitsFulfilledEver = unitsFulfilledEver
+        recordFulfilment(unitCount, tag)
 
         unitsFulfilled += unitCount
         tag.unitsFulfilled = unitsFulfilled
@@ -297,7 +298,6 @@ abstract class ServerContract(
         tag.level = level
         tag.quantityGrowthFactor = quantityGrowthFactor
         tag.maxLevel = maxLevel
-        tag.isActive = isActive
         tag.isInitialized = isInitialized
 
         return tag
@@ -309,8 +309,6 @@ abstract class ServerContract(
         var (ContractTag).level by int()
         var (ContractTag).quantityGrowthFactor by double()
         var (ContractTag).maxLevel by int()
-
-        var (ContractTag).isActive by boolean()
 
         var (ContractTag).currentCycleStart by long()
         var (ContractTag).cycleDurationMs by long()

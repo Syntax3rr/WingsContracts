@@ -5,11 +5,12 @@ import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.compat.computercraft.DetailsHelper.details
 import dev.biserman.wingscontracts.config.GrowthFunctionOptions
 import dev.biserman.wingscontracts.config.ModConfig
+import dev.biserman.wingscontracts.core.Contract.Companion.isActive
+import dev.biserman.wingscontracts.core.Contract.Companion.maxFulfilments
 import dev.biserman.wingscontracts.core.ServerContract.Companion.baseUnitsDemanded
 import dev.biserman.wingscontracts.core.ServerContract.Companion.currentCycleStart
 import dev.biserman.wingscontracts.core.ServerContract.Companion.cycleDurationMs
 import dev.biserman.wingscontracts.core.ServerContract.Companion.expiresIn
-import dev.biserman.wingscontracts.core.ServerContract.Companion.isActive
 import dev.biserman.wingscontracts.core.ServerContract.Companion.isInitialized
 import dev.biserman.wingscontracts.core.ServerContract.Companion.level
 import dev.biserman.wingscontracts.core.ServerContract.Companion.maxLevel
@@ -64,6 +65,7 @@ class AbyssalContract(
     maxLevel: Int,
 
     isActive: Boolean,
+    maxFulfilments: Int,
     isInitialized: Boolean
 ) : ServerContract(
     id,
@@ -90,6 +92,7 @@ class AbyssalContract(
     quantityGrowthFactor,
     maxLevel,
     isActive,
+    maxFulfilments,
     isInitialized
 ) {
     override val type get() = ContractType.ABYSSAL
@@ -220,7 +223,7 @@ class AbyssalContract(
 
     override val details
         get() = AbyssalContract::class.memberProperties
-            .filter { it.n`ame != "details" }
+            .filter { it.name != "details" }
             .associate { prop ->
                 Pair(
                     prop.name, when (prop.name) {
@@ -265,6 +268,7 @@ class AbyssalContract(
                     ?: ModConfig.SERVER.defaultQuantityGrowthFactor.get(),
                 maxLevel = tag.maxLevel ?: ModConfig.SERVER.defaultMaxLevel.get(),
                 isActive = tag.isActive ?: true,
+                maxFulfilments = tag.maxFulfilments ?: ModConfig.SERVER.defaultMaxFulfilments.get(),
                 isInitialized = tag.isInitialized ?: false
             )
         }

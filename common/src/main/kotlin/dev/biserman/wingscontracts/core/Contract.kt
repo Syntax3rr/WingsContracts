@@ -5,6 +5,7 @@ import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
+import dev.biserman.wingscontracts.nbt.ContractTagHelper.boolean
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.csv
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.int
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.itemStack
@@ -56,7 +57,10 @@ abstract class Contract(
     val description: String? = null,
     val shortTargetList: String? = null,
     val displayItem: ItemStack? = null,
-    val rarity: Int? = null
+    val rarity: Int? = null,
+
+    var isActive: Boolean = true,
+    val maxFulfilments: Int = 0,
 ) {
     abstract val type: ContractType
 
@@ -89,7 +93,16 @@ abstract class Contract(
         return targetConditions.isNotEmpty() // blank contracts return false unless they have nbt conditions
     }
 
-    open val isDisabled get() = false
+    open val isDisabled get() = !isActive
+
+    internal fun recordFulfilment(units: Int, tag: ContractTag) {
+        unitsFulfilledEver += units
+        tag.unitsFulfilledEver = unitsFulfilledEver
+        if (maxFulfilments > 0 && unitsFulfilledEver >= maxFulfilments) {
+            isActive = false
+            tag.isActive = isActive
+        }
+    }
 
     val displayItems by lazy {
         if (displayItem == null) {
@@ -314,6 +327,8 @@ abstract class Contract(
         tag.description = description
         tag.shortTargetList = shortTargetList
         tag.displayItem = displayItem
+        tag.isActive = isActive
+        tag.maxFulfilments = maxFulfilments
 
         return tag
     }
@@ -343,6 +358,9 @@ abstract class Contract(
                 if (value != null) tag.putInt("type", value.id)
             }
         var (ContractTag).id by uuid()
+
+        var (ContractTag).isActive by boolean()
+        var (ContractTag).maxFulfilments by int()
 
         var (ContractTag).targetItemKeys by csv("targetItems")
         var (ContractTag).targetTagKeys by csv("targetTags")

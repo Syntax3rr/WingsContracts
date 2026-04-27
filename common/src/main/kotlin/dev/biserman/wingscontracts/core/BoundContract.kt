@@ -50,6 +50,9 @@ class BoundContract(
     name: String?,
 
     val matchingContractId: UUID,
+
+    isActive: Boolean,
+    maxFulfilments: Int,
 ) : Contract(
     id,
     targetItems,
@@ -64,7 +67,9 @@ class BoundContract(
     null,
     null,
     null,
-    null
+    null,
+    isActive,
+    maxFulfilments,
 ) {
     override val type get() = ContractType.BOUND
     override val item: Item get() = ModItemRegistry.BOUND_CONTRACT.get()
@@ -128,6 +133,8 @@ class BoundContract(
     override val rewardPerUnit get() = otherSideCountPerUnit
 
     override fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): List<ItemStack> {
+        if (!isActive) return listOf()
+
         val otherPortal = PortalLinker.get(portal.level ?: return listOf())
             .linkedPortals[matchingContractId] ?: return listOf()
         val otherTag = ContractTagHelper.getContractTag(otherPortal.contractSlot) ?: return listOf()
@@ -158,11 +165,8 @@ class BoundContract(
             otherPortal.cachedRewards.addItem(consumedItem)
         }
 
-        unitsFulfilledEver += unitCount
-        tag.unitsFulfilledEver = unitsFulfilledEver
-
-        otherContract.unitsFulfilledEver += unitCount
-        otherTag.unitsFulfilledEver = unitsFulfilledEver
+        recordFulfilment(unitCount, tag)
+        otherContract.recordFulfilment(unitCount, otherTag)
 
         burnSomeItems(otherConsumedItems, level)
         return otherConsumedItems
@@ -265,7 +269,9 @@ class BoundContract(
                 unitsFulfilledEver = tag.unitsFulfilledEver ?: 0,
                 author = tag.author ?: "",
                 name = tag.name,
-                matchingContractId = tag.matchingContractId ?: UUID.randomUUID()
+                matchingContractId = tag.matchingContractId ?: UUID.randomUUID(),
+                isActive = tag.isActive ?: true,
+                maxFulfilments = tag.maxFulfilments ?: ModConfig.SERVER.defaultMaxFulfilments.get(),
             )
         }
     }

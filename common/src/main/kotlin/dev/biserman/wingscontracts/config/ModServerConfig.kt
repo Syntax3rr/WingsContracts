@@ -30,6 +30,7 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
     val defaultMaxLevel: ModConfigSpec.ConfigValue<Int>
     val defaultQuantityGrowthFactor: ModConfigSpec.DoubleValue
     val defaultExpiresIn: ModConfigSpec.ConfigValue<Int>
+    val defaultMaxFulfilments: ModConfigSpec.ConfigValue<Int>
 
     init {
         builder.push("General")
@@ -178,6 +179,15 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
                 When set to a negative value, contracts never expire.
                 """.trimIndent()
             ).define("defaultExpiresIn", -1)
+
+        defaultMaxFulfilments =
+            builder.comment(
+                """
+                The default cap on a contract's total units fulfilled before it deactivates.
+                When set to 0 or a negative value, contracts have no fulfilment cap.
+                Per-contract overrides via the datapack `maxFulfilments` field take precedence.
+                """.trimIndent()
+            ).define("defaultMaxFulfilments", 0)
 
         builder.pop()
     }
