@@ -2,6 +2,7 @@ package dev.biserman.wingscontracts.core
 
 import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
+import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
@@ -16,6 +17,7 @@ import dev.biserman.wingscontracts.nbt.ItemCondition
 import dev.biserman.wingscontracts.nbt.ItemConditionParser
 import dev.biserman.wingscontracts.registry.ModItemRegistry
 import dev.biserman.wingscontracts.util.ComponentHelper.trimBrackets
+import dev.biserman.wingscontracts.util.DenominationsHelper
 import net.minecraft.ChatFormatting
 import net.minecraft.core.NonNullList
 import net.minecraft.core.component.DataComponents
@@ -61,6 +63,8 @@ abstract class Contract(
 
     var isActive: Boolean = true,
     val maxFulfilments: Int = 0,
+
+    val currencyAnchor: Item? = null,
 ) {
     abstract val type: ContractType
 
@@ -77,6 +81,10 @@ abstract class Contract(
             }
         }
 
+        if (currencyAnchor != null) {
+            return denominationMap()?.containsKey(itemStack.item) == true
+        }
+
         if (targetTags.isNotEmpty()) {
             return targetTags.any { itemStack.`is`(it) }
         }
@@ -91,6 +99,11 @@ abstract class Contract(
         }
 
         return targetConditions.isNotEmpty() // blank contracts return false unless they have nbt conditions
+    }
+
+    private fun denominationMap(): Map<Item, Double>? {
+        val anchor = currencyAnchor ?: return null
+        return ContractSavedData.fakeData.currencyHandler.itemToCurrencyMap[anchor]
     }
 
     open val isDisabled get() = !isActive
@@ -271,14 +284,34 @@ abstract class Contract(
     }
 
     open fun countConsumableUnits(items: NonNullList<ItemStack>): Int {
+        val denominations = denominationMap()
+        if (denominations != null) {
+            val unitValue = unitValueInDenominations(denominations)
+            if (unitValue <= 0) return 0
+            val totalValue = items
+                .filter { !it.isEmpty && denominations.containsKey(it.item) }
+                .sumOf { (denominations[it.item]!!.toLong()) * it.count }
+            return (totalValue / unitValue).toInt()
+        }
+
         val matchingStacks = items.filter { !it.isEmpty && matches(it) }
         val matchingCount = matchingStacks.sumOf { it.count }
         return matchingCount / countPerUnit
     }
 
+    private fun unitValueInDenominations(denominations: Map<Item, Double>): Long {
+        val anchorValue = denominations[currencyAnchor ?: return 0]?.toLong() ?: return 0
+        return countPerUnit * anchorValue
+    }
+
     abstract fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): ConsumeResult
 
     open fun consumeUnits(unitCount: Int, portal: ContractPortalBlockEntity): List<ItemStack> {
+        val denominations = denominationMap()
+        if (denominations != null) {
+            return consumeCurrencyUnits(unitCount, portal, denominations)
+        }
+
         val goalAmount = unitCount * countPerUnit
         var amountTaken = 0
         val consumedItems = mutableListOf<ItemStack>()
@@ -299,6 +332,58 @@ abstract class Contract(
         }
 
         return consumedItems
+    }
+
+    private fun consumeCurrencyUnits(
+        unitCount: Int,
+        portal: ContractPortalBlockEntity,
+        denominations: Map<Item, Double>,
+    ): List<ItemStack> {
+        var remaining = unitCount * unitValueInDenominations(denominations)
+        if (remaining <= 0) return emptyList()
+        val out = mutableListOf<ItemStack>()
+
+        val sortedSlots = portal.cachedInput.items
+            .filter { !it.isEmpty && denominations.containsKey(it.item) }
+            .sortedBy { denominations[it.item]!! }
+        for (stack in sortedSlots) {
+            if (remaining <= 0) break
+            val itemValue = denominations[stack.item]!!.toLong()
+            if (itemValue <= 0) continue
+            val maxTake = (remaining / itemValue).toInt()
+            val take = min(stack.count, maxTake)
+            if (take > 0) {
+                out.add(stack.split(take))
+                remaining -= take * itemValue
+            }
+        }
+
+        if (remaining > 0) { // Try to break a larger stack to cover remaining
+            val breakable = portal.cachedInput.items
+                .filter {
+                    !it.isEmpty
+                            && denominations.containsKey(it.item)
+                            && denominations[it.item]!!.toLong() >= remaining
+                }
+                .minByOrNull { denominations[it.item]!! }
+            if (breakable != null) {
+                val itemValue = denominations[breakable.item]!!.toLong()
+                out.add(breakable.split(1))
+                val change = itemValue - remaining
+                if (change > 0) {
+                    for ((item, count) in DenominationsHelper.denominate(change.toDouble(), denominations)) {
+                        var leftover = count
+                        while (leftover > 0) {
+                            val take = min(leftover, item.defaultMaxStackSize)
+                            portal.cachedInput.addItem(ItemStack(item, take))
+                            leftover -= take
+                        }
+                    }
+                }
+            }
+        }
+
+        return out
     }
 
     open fun addToGoggleTooltip(
@@ -329,6 +414,7 @@ abstract class Contract(
         tag.displayItem = displayItem
         tag.isActive = isActive
         tag.maxFulfilments = maxFulfilments
+        tag.currencyAnchor = currencyAnchor?.let { BuiltInRegistries.ITEM.getKey(it)?.toString() }
 
         return tag
     }
@@ -361,6 +447,13 @@ abstract class Contract(
 
         var (ContractTag).isActive by boolean()
         var (ContractTag).maxFulfilments by int()
+        var (ContractTag).currencyAnchor by string()
+
+        fun (ContractTag).currencyAnchorItem(): Item? {
+            val key = currencyAnchor ?: return null
+            val resolved = BuiltInRegistries.ITEM[ResourceLocation.tryParse(key) ?: return null]
+            return if (resolved == Items.AIR) null else resolved
+        }
 
         var (ContractTag).targetItemKeys by csv("targetItems")
         var (ContractTag).targetTagKeys by csv("targetTags")

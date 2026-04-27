@@ -61,7 +61,9 @@ abstract class ServerContract(
 
     isActive: Boolean,
     maxFulfilments: Int,
-    var isInitialized: Boolean
+    var isInitialized: Boolean,
+
+    currencyAnchor: Item? = null,
 ) : Contract(
     id,
     targetItems,
@@ -79,6 +81,7 @@ abstract class ServerContract(
     rarity,
     isActive,
     maxFulfilments,
+    currencyAnchor,
 ) {
     abstract val growthFunction: GrowthFunctionOptions
 
@@ -87,7 +90,7 @@ abstract class ServerContract(
     override val rewardPerUnit get() = reward.rewardPerUnit
     override val isComplete get() = unitsFulfilled >= unitsDemanded
 
-    /** True when `maxFulfilments` is set so low that the contract will deactivate before completing the current cycle (no level-up possible). */
+    /** True when `maxFulfilments` will complete before we hit `unitsDemanded`. */
     val willCapBeforeLevelUp: Boolean
         get() = maxFulfilments in 1..unitsDemanded
 

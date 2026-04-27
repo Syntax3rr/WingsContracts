@@ -5,18 +5,6 @@ import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.compat.computercraft.DetailsHelper.details
 import dev.biserman.wingscontracts.config.GrowthFunctionOptions
 import dev.biserman.wingscontracts.config.ModConfig
-import dev.biserman.wingscontracts.core.Contract.Companion.isActive
-import dev.biserman.wingscontracts.core.Contract.Companion.maxFulfilments
-import dev.biserman.wingscontracts.core.ServerContract.Companion.baseUnitsDemanded
-import dev.biserman.wingscontracts.core.ServerContract.Companion.currentCycleStart
-import dev.biserman.wingscontracts.core.ServerContract.Companion.cycleDurationMs
-import dev.biserman.wingscontracts.core.ServerContract.Companion.expiresIn
-import dev.biserman.wingscontracts.core.ServerContract.Companion.isInitialized
-import dev.biserman.wingscontracts.core.ServerContract.Companion.level
-import dev.biserman.wingscontracts.core.ServerContract.Companion.maxLevel
-import dev.biserman.wingscontracts.core.ServerContract.Companion.quantityGrowthFactor
-import dev.biserman.wingscontracts.core.ServerContract.Companion.reward
-import dev.biserman.wingscontracts.core.ServerContract.Companion.unitsFulfilled
 import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ItemCondition
@@ -66,7 +54,9 @@ class AbyssalContract(
 
     isActive: Boolean,
     maxFulfilments: Int,
-    isInitialized: Boolean
+    isInitialized: Boolean,
+
+    currencyAnchor: Item? = null,
 ) : ServerContract(
     id,
     targetItems,
@@ -93,7 +83,8 @@ class AbyssalContract(
     maxLevel,
     isActive,
     maxFulfilments,
-    isInitialized
+    isInitialized,
+    currencyAnchor,
 ) {
     override val type get() = ContractType.ABYSSAL
     override val item: Item get() = ModItemRegistry.ABYSSAL_CONTRACT.get()
@@ -279,7 +270,8 @@ class AbyssalContract(
                 maxLevel = tag.maxLevel ?: ModConfig.SERVER.defaultMaxLevel.get(),
                 isActive = tag.isActive ?: true,
                 maxFulfilments = tag.maxFulfilments ?: ModConfig.SERVER.defaultMaxFulfilments.get(),
-                isInitialized = tag.isInitialized ?: false
+                isInitialized = tag.isInitialized ?: false,
+                currencyAnchor = tag.currencyAnchorItem(),
             )
         }
     }

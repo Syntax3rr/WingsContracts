@@ -6,13 +6,12 @@ import net.minecraft.world.SimpleContainer
 import net.minecraft.world.item.ItemStack
 
 class CompactingContainer(containerSize: Int) : SimpleContainer(containerSize) {
-    private val currencyHandler get() = ContractSavedData.Companion.fakeData.currencyHandler
+    private val currencyHandler get() = ContractSavedData.fakeData.currencyHandler
 
     override fun setChanged() { // avoid calling anything that calls setChanged
         // compare count to maxStackSize to maintain invariant that compacting never increases slots used
         val allItems = items.groupBy {
             it.count <= it.maxStackSize
-                    && it.components.isEmpty
                     && currencyHandler.isCurrency(it)
         }
         val currencyItems = allItems[true]
@@ -36,6 +35,12 @@ class CompactingContainer(containerSize: Int) : SimpleContainer(containerSize) {
         // add back in the above-max-stack-size items
         for (otherItem in allItems[false]?.filter { !it.isEmpty } ?: listOf()) {
             items[i] = otherItem
+            i += 1
+        }
+
+        // clear trailing slots so leftovers from before consolidation aren't double-counted next call
+        while (i < items.size) {
+            items[i] = ItemStack.EMPTY
             i += 1
         }
 
