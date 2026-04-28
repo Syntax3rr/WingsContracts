@@ -67,7 +67,7 @@ class ContractItem(properties: Properties) : Item(properties) {
     override fun isBarVisible(itemStack: ItemStack): Boolean {
         val contract = LoadedContracts[itemStack] ?: return false
         if (getBarWidth(itemStack) == 0) return false
-        if (contract is ServerContract && !contract.willCapBeforeLevelUp) {
+        if (contract is ServerContract && !contract.willCapBeforeLevelUp && contract.cycleDurationMs > 0) {
             return System.currentTimeMillis() <= contract.currentCycleStart + contract.cycleDurationMs
         }
         return true

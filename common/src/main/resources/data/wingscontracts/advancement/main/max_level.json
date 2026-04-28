@@ -3,7 +3,7 @@
   "criteria": {
     "max_level": {
       "conditions": {
-        "item_matches": "tag.contractInfo$(?:.*\\blevel:(\\d+),.*\\bmaxLevel:\\1\\b.*)|(?:.*\\bmaxLevel:(\\d+),.*\\blevel:\\2\\b.*)"
+        "item_matches": "tag.contractInfo$(?=.*\\bmaxLevel:(\\d+)\\b).*\\blevel:\\1\\b.*;tag.contractInfo.level>2"
       },
       "trigger": "wingscontracts:contract_complete"
     }

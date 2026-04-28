@@ -45,6 +45,53 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
     val defaultDecayPercentPerEvent: ModConfigSpec.DoubleValue
     val defaultDecayMinLevel: ModConfigSpec.IntValue
 
+    // Celestial Contracts
+    // General
+    val celestialCurrencyAnchor: ModConfigSpec.ConfigValue<String>
+    val celestialContractGrowthFunction: ModConfigSpec.EnumValue<GrowthFunctionOptions>
+
+    // Random shape rolls
+    val celestialRandomBaseUnitsDemandedMin: ModConfigSpec.IntValue
+    val celestialRandomBaseUnitsDemandedMax: ModConfigSpec.IntValue
+    val celestialRandomMaxLifetimeUnitsMin: ModConfigSpec.IntValue
+    val celestialRandomMaxLifetimeUnitsMax: ModConfigSpec.IntValue
+    val celestialRandomUnlimitedLifetimeUnitsChance: ModConfigSpec.DoubleValue
+    val celestialRandomMaxLevelMin: ModConfigSpec.IntValue
+    val celestialRandomMaxLevelMax: ModConfigSpec.IntValue
+    val celestialRandomQuantityGrowthFactorMin: ModConfigSpec.DoubleValue
+    val celestialRandomQuantityGrowthFactorMax: ModConfigSpec.DoubleValue
+    val celestialRandomCycleDurationOptionsMs: ModConfigSpec.ConfigValue<String>
+    val celestialRandomCycleDurationWeights: ModConfigSpec.ConfigValue<String>
+    val celestialRandomExpiresInMin: ModConfigSpec.IntValue
+    val celestialRandomExpiresInMax: ModConfigSpec.IntValue
+    val celestialRandomNeverExpiresChance: ModConfigSpec.DoubleValue
+    val celestialFiniteLifetimeUnitsCycleSuppressionFactor: ModConfigSpec.DoubleValue
+
+    // Cost formula
+    val celestialVariance: ModConfigSpec.DoubleValue
+    val celestialBaseCostMultiplier: ModConfigSpec.DoubleValue
+    val celestialCostPerExtraLifetimeUnitFactor: ModConfigSpec.DoubleValue
+    val celestialCostPerExtraLevelFactor: ModConfigSpec.DoubleValue
+    val celestialCostPerExtraExpiryFactor: ModConfigSpec.DoubleValue
+    val celestialUnlimitedLifetimeUnitsMultiplier: ModConfigSpec.DoubleValue
+    val celestialNeverExpiresMultiplier: ModConfigSpec.DoubleValue
+    val celestialCycleDurationCostFactors: ModConfigSpec.ConfigValue<String>
+    val celestialUnlimitedLifetimeUnitsRarityCap: ModConfigSpec.IntValue
+
+    // Target replacement
+    val celestialReplaceCurrencyTargetRate: ModConfigSpec.DoubleValue
+    val celestialReplaceCurrencyTargetFactor: ModConfigSpec.DoubleValue
+
+    // Distribution
+    val disableDefaultCelestialContractOptions: ModConfigSpec.BooleanValue
+    val allowBlankCelestialContractUse: ModConfigSpec.BooleanValue
+    val celestialDefinedContractChance: ModConfigSpec.DoubleValue
+    val celestialContractInAbyssalPoolChance: ModConfigSpec.DoubleValue
+    val celestialWanderingTraderChance: ModConfigSpec.DoubleValue
+    val celestialWanderingTraderPriceMultiplier: ModConfigSpec.DoubleValue
+    val celestialLootInjectionTables: ModConfigSpec.ConfigValue<String>
+    val celestialLootInjectionWeight: ModConfigSpec.IntValue
+
     init {
         builder.push("General")
         denominations =
@@ -251,6 +298,163 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
                 Set to 0 to allow decay to drop the contract to level 0, deactivating it like an expired contract.
                 """.trimIndent()
             ).defineInRange("defaultDecayMinLevel", 1, 0, Int.MAX_VALUE)
+
+        builder.pop()
+        builder.push("Celestial Contracts")
+
+        // General
+        celestialCurrencyAnchor = builder.comment(
+            """
+            The currency item every random Celestial Contract demands as payment.
+            Should be the smallest unit of a denomination group from `denominations` (e.g. minecraft:emerald, with emerald_block as a higher denomination).
+            Fully-defined celestial contracts ignore this and use their own targets.
+            """.trimIndent()
+        ).define("celestialCurrencyAnchor", "minecraft:emerald")
+
+        celestialContractGrowthFunction = builder.comment(
+            "The function used by Celestial Contracts that opt into leveling. Mirrors abyssalContractGrowthFunction."
+        ).defineEnum("celestialContractGrowthFunction", GrowthFunctionOptions.EXPONENTIAL)
+
+        // Random shape rolls
+        celestialRandomBaseUnitsDemandedMin =
+            builder.comment("Lower bound on randomly-rolled baseUnitsDemanded (units to fulfill per cycle, at level 1) for celestial contracts. Pool entries can override via `shape.baseUnitsDemanded`.")
+                .defineInRange("celestialRandomBaseUnitsDemandedMin", 1, 1, Int.MAX_VALUE)
+        celestialRandomBaseUnitsDemandedMax =
+            builder.comment("Upper bound on randomly-rolled baseUnitsDemanded for celestial contracts.")
+                .defineInRange("celestialRandomBaseUnitsDemandedMax", 1, 1, Int.MAX_VALUE)
+
+        celestialRandomMaxLifetimeUnitsMin =
+            builder.comment("Lower bound on randomly-rolled maxLifetimeUnits for celestial contracts.")
+                .defineInRange("celestialRandomMaxLifetimeUnitsMin", 1, 1, Int.MAX_VALUE)
+        celestialRandomMaxLifetimeUnitsMax =
+            builder.comment("Upper bound on randomly-rolled maxLifetimeUnits for celestial contracts.")
+                .defineInRange("celestialRandomMaxLifetimeUnitsMax", 20, 1, Int.MAX_VALUE)
+        celestialRandomUnlimitedLifetimeUnitsChance =
+            builder.comment("Probability that a celestial contract rolls maxLifetimeUnits=0 (unlimited). Multiplied into the cost via celestialUnlimitedLifetimeUnitsMultiplier.")
+                .defineInRange("celestialRandomUnlimitedLifetimeUnitsChance", 0.02, 0.0, 1.0)
+
+        celestialRandomMaxLevelMin =
+            builder.comment("Lower bound on randomly-rolled maxLevel for celestial contracts.")
+                .defineInRange("celestialRandomMaxLevelMin", 1, 1, Int.MAX_VALUE)
+        celestialRandomMaxLevelMax =
+            builder.comment("Upper bound on randomly-rolled maxLevel for celestial contracts. Default = 1, so random celestials don't level by default.")
+                .defineInRange("celestialRandomMaxLevelMax", 1, 1, Int.MAX_VALUE)
+        celestialRandomQuantityGrowthFactorMin =
+            builder.comment("Lower bound on quantityGrowthFactor when celestialRandomMaxLevelMax > 1.")
+                .defineInRange("celestialRandomQuantityGrowthFactorMin", 1.5, 1.0, 100.0)
+        celestialRandomQuantityGrowthFactorMax =
+            builder.comment("Upper bound on quantityGrowthFactor when celestialRandomMaxLevelMax > 1.")
+                .defineInRange("celestialRandomQuantityGrowthFactorMax", 2.5, 1.0, 100.0)
+
+        celestialRandomCycleDurationOptionsMs = builder.comment(
+            """
+            Comma-separated list of discrete cycle-duration options (in milliseconds) for celestial contracts.
+            0 means no cycle (one-shot until maxLifetimeUnits).
+            Defaults: 0 (none), 3600000 (1h), 21600000 (6h), 86400000 (1d), 604800000 (7d).
+            """.trimIndent()
+        ).define("celestialRandomCycleDurationOptionsMs", "0,3600000,21600000,86400000,604800000")
+        celestialRandomCycleDurationWeights = builder.comment(
+            "Comma-separated weights for the cycle-duration options. Must have the same length as celestialRandomCycleDurationOptionsMs."
+        ).define("celestialRandomCycleDurationWeights", "3,1,2,4,1")
+
+        celestialRandomExpiresInMin =
+            builder.comment("Lower bound on randomly-rolled expiresIn (in cycles) for cycled celestial contracts.")
+                .defineInRange("celestialRandomExpiresInMin", 3, 0, Int.MAX_VALUE)
+        celestialRandomExpiresInMax =
+            builder.comment("Upper bound on randomly-rolled expiresIn (in cycles) for cycled celestial contracts.")
+                .defineInRange("celestialRandomExpiresInMax", 10, 0, Int.MAX_VALUE)
+        celestialRandomNeverExpiresChance =
+            builder.comment("Probability of rolling expiresIn=-1 (never expires) when the contract is cycled. Multiplied into the cost via celestialNeverExpiresMultiplier.")
+                .defineInRange("celestialRandomNeverExpiresChance", 0.1, 0.0, 1.0)
+
+        celestialFiniteLifetimeUnitsCycleSuppressionFactor = builder.comment(
+            """
+            When a celestial rolls a finite maxLifetimeUnits (>0), non-zero cycle-duration options have their weights multiplied by this factor before the cycle is picked.
+            Set to 1.0 to disable the suppression; 0.0 forbids cycles for finite-lifetime contracts entirely.
+            """.trimIndent()
+        ).defineInRange("celestialFiniteLifetimeUnitsCycleSuppressionFactor", 0.05, 0.0, 1.0)
+
+        // Cost formula
+        celestialVariance =
+            builder.comment("Symmetric variance applied to the final celestial countPerUnit (mirrors `variance` for abyssal). 0 disables.")
+                .defineInRange("celestialVariance", 0.1, 0.0, Double.MAX_VALUE)
+
+        celestialBaseCostMultiplier =
+            builder.comment("Global scalar applied to every randomly-generated celestial contract's price. 1.0 means a 1-fulfilment contract costs roughly the reward's fair value.")
+                .defineInRange("celestialBaseCostMultiplier", 1.0, 0.0, Double.MAX_VALUE)
+        celestialCostPerExtraLifetimeUnitFactor =
+            builder.comment("Linear per-lifetime-unit cost growth: multiplier ×= 1 + this × (maxLifetimeUnits - 1). At 0.15 a 5-unit lifetime costs ~1.6× per unit vs a 1-unit — total ~8× for 5 rewards.")
+                .defineInRange("celestialCostPerExtraLifetimeUnitFactor", 0.15, 0.0, Double.MAX_VALUE)
+        celestialCostPerExtraLevelFactor =
+            builder.comment("Linear per-level cost growth: multiplier ×= 1 + this × (maxLevel - 1). Stays modest because growth-factor scaling already inflates per-level demand.")
+                .defineInRange("celestialCostPerExtraLevelFactor", 0.5, 0.0, Double.MAX_VALUE)
+        celestialCostPerExtraExpiryFactor =
+            builder.comment("Linear cost growth per cycle of expiresIn: multiplier ×= 1 + this × max(0, expiresIn). Small per-cycle premium on top of cycle-bucket cost.")
+                .defineInRange("celestialCostPerExtraExpiryFactor", 0.05, 0.0, Double.MAX_VALUE)
+        celestialUnlimitedLifetimeUnitsMultiplier =
+            builder.comment("Cost multiplier when maxLifetimeUnits=0 (unlimited). Rare roll, paid as a flat per-lifetime-unit premium for the right to keep buying forever.")
+                .defineInRange("celestialUnlimitedLifetimeUnitsMultiplier", 12.0, 1.0, Double.MAX_VALUE)
+        celestialNeverExpiresMultiplier =
+            builder.comment("Cost multiplier when expiresIn=-1 and the contract is cycled. Stacks with the unlimited multiplier when both are rolled.")
+                .defineInRange("celestialNeverExpiresMultiplier", 4.0, 1.0, Double.MAX_VALUE)
+        celestialCycleDurationCostFactors = builder.comment(
+            """
+            Comma-separated per-bucket cost factors aligned to celestialRandomCycleDurationOptionsMs.
+            Defaults `1.0,2.5,1.5,1.0,0.6` correspond to: no-cycle baseline 1.0×, 1h cycle 2.5×, 6h 1.5×, 1d 1.0× (baseline), 7d 0.6×.
+            """.trimIndent()
+        ).define("celestialCycleDurationCostFactors", "1.0,2.5,1.5,1.0,0.6")
+        celestialUnlimitedLifetimeUnitsRarityCap =
+            builder.comment("Sentinel 'effective lifetime units' used by the rarity calc when maxLifetimeUnits=0.")
+                .defineInRange("celestialUnlimitedLifetimeUnitsRarityCap", 100, 1, Int.MAX_VALUE)
+
+        // Target replacement
+        celestialReplaceCurrencyTargetRate =
+            builder.comment(
+                """
+                Probability that a randomly-generated celestial contract demands a non-currency item (drawn from abyssal targets) instead of the celestial currency anchor.
+                Mirrors abyssal's replaceRewardWithRandomRate but in reverse: abyssal swaps its currency *reward* for a random target item; celestial swaps its currency *target* for a random non-currency item, scaled to equivalent value via abyssal exchange rates.
+                """.trimIndent()
+            ).defineInRange("celestialReplaceCurrencyTargetRate", 0.05, 0.0, 1.0)
+        celestialReplaceCurrencyTargetFactor =
+            builder.comment("Multiplier applied to the swapped target count. Values < 1 make item-targeted celestials cheaper to compensate for items being less liquid than currency.")
+                .defineInRange("celestialReplaceCurrencyTargetFactor", 0.8, 0.0, Double.MAX_VALUE)
+
+        // Distribution
+        disableDefaultCelestialContractOptions = builder.comment(
+            """
+            If true, skip all built-in celestialContracts and celestialRewardPool entries in datapack files ending in "_default.json".
+            Use this if you want to replace the default celestial options with a custom data pack.
+            """.trimIndent()
+        ).define("disableDefaultCelestialContractOptions", false)
+
+        allowBlankCelestialContractUse = builder.comment(
+            "If true, Blank Celestial Contracts can be right-clicked to roll a random Celestial Contract."
+        ).define("allowBlankCelestialContractUse", true)
+
+        celestialDefinedContractChance = builder.comment(
+            """
+            Per-roll probability that the celestial generator picks a fully-defined contract from `celestialContracts` instead of rolling a random one from `celestialRewardPool`.
+            Lets curated set-pieces (Harvest Festival, Dragon's Promise, etc.) surface naturally through blank-celestial right-clicks, loot drops, and abyssal-pool drop-ins. 0 disables; 1.0 makes the generator always emit a defined contract when any are loaded.
+            """.trimIndent()
+        ).defineInRange("celestialDefinedContractChance", 0.01, 0.0, 1.0)
+
+        celestialContractInAbyssalPoolChance = builder.comment(
+            "Per-slot probability a refreshed Abyssal Contracts pool slot rolls a random celestial instead. 0 disables."
+        ).defineInRange("celestialContractInAbyssalPoolChance", 0.001, 0.0, 1.0)
+
+        celestialWanderingTraderChance = builder.comment(
+            "Probability the wandering trader includes a celestial contract trade in its rotation. 0 disables."
+        ).defineInRange("celestialWanderingTraderChance", 0.05, 0.0, 1.0)
+        celestialWanderingTraderPriceMultiplier = builder.comment(
+            "Multiplier on the trade-emerald price for wandering-trader celestial trades."
+        ).defineInRange("celestialWanderingTraderPriceMultiplier", 1.0, 0.0, Double.MAX_VALUE)
+
+        celestialLootInjectionTables = builder.comment(
+            "Comma-separated loot table IDs to inject random celestial drops into."
+        ).define("celestialLootInjectionTables", "minecraft:chests/simple_dungeon,minecraft:chests/stronghold_corridor")
+        celestialLootInjectionWeight = builder.comment(
+            "Loot weight for the injected celestial entry."
+        ).defineInRange("celestialLootInjectionWeight", 1, 0, Int.MAX_VALUE)
 
         builder.pop()
     }

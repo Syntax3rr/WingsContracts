@@ -36,7 +36,7 @@ class ContractPortalBlockEntityRenderer(private val context: BlockEntityRenderer
             mode == ContractPortalMode.NOT_CONNECTED -> ModItemRegistry.YELLOW_EXCLAMATION_MARK.get().defaultInstance
             mode == ContractPortalMode.ERROR -> ModItemRegistry.RED_EXCLAMATION_MARK.get().defaultInstance
             level.hasNeighborSignal(blockPos) -> ModItemRegistry.EXCLAMATION_MARK.get().defaultInstance
-            else -> Contract.getDisplayItem(portal.contractSlot, relativeGameTime)
+            else -> Contract.getPortalDisplayItem(portal.contractSlot, relativeGameTime)
         }
         if (showItem.isEmpty) {
             return

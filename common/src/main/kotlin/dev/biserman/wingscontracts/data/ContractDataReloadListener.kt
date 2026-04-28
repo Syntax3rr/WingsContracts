@@ -8,6 +8,7 @@ import dev.architectury.platform.Platform
 import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.config.ModConfig
 import dev.biserman.wingscontracts.core.AbyssalContract
+import dev.biserman.wingscontracts.core.CelestialContract
 import dev.biserman.wingscontracts.core.Contract.Companion.countPerUnit
 import dev.biserman.wingscontracts.core.Contract.Companion.name
 import dev.biserman.wingscontracts.core.Contract.Companion.requiresAll
@@ -20,6 +21,7 @@ import dev.biserman.wingscontracts.core.Contract.Companion.targetItemKeys
 import dev.biserman.wingscontracts.core.Contract.Companion.targetItems
 import dev.biserman.wingscontracts.core.Contract.Companion.targetTagKeys
 import dev.biserman.wingscontracts.core.Contract.Companion.targetTags
+import dev.biserman.wingscontracts.data.ContractSavedData.Companion.random
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
 import net.minecraft.core.registries.BuiltInRegistries
@@ -67,6 +69,25 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
         }
     }
 
+    fun randomCelestialRewardPoolEntry(): CelestialRewardPoolEntry? {
+        val pool = data.availableCelestialRewardPool
+        if (pool.isEmpty()) return null
+        val totalWeight = pool.sumOf { it.weight }
+        if (totalWeight <= 0) return null
+        var pick = random.nextInt(totalWeight)
+        for (entry in pool) {
+            pick -= entry.weight
+            if (pick < 0) return entry
+        }
+        return pool.last()
+    }
+
+    fun getCelestialContractByName(targetName: String): ContractTag? {
+        return data.availableCelestialContracts.firstOrNull { it.name == targetName }?.let {
+            ContractTag(it.tag.copy())
+        }
+    }
+
     var jsonBlobs = mutableMapOf<ResourceLocation, JsonElement>()
 
     override fun apply(
@@ -88,6 +109,10 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
         val nonDefaultDefaultRewards = mutableListOf<RewardBagEntry>()
         val fullRewardBlocklist = mutableListOf<String>()
         val nonDefaultRewardBlocklist = mutableListOf<String>()
+        val allCelestialContracts = mutableListOf<ContractTag>()
+        val nonDefaultCelestialContracts = mutableListOf<ContractTag>()
+        val allCelestialRewardPool = mutableListOf<CelestialRewardPoolEntry>()
+        val nonDefaultCelestialRewardPool = mutableListOf<CelestialRewardPoolEntry>()
 
         for ((resourceLocation, json) in jsonBlobs) {
             if (resourceLocation.path.startsWith("_")) {
@@ -145,6 +170,39 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
                 if (!isDefault) {
                     nonDefaultRewardBlocklist.addAll(parsedRewardBlocklist)
                 }
+
+                val parsedCelestialContracts = jsonObject.get("celestialContracts")?.asJsonArray?.map {
+                    ContractTag.fromJson(it.asJsonObject)
+                } ?: listOf()
+                val celestialValidation =
+                    validateCelestialContracts(parsedCelestialContracts, resourceLocation, isDefault)
+                skippedBecauseUnloaded += celestialValidation.skippedBecauseUnloaded
+                allCelestialContracts.addAll(celestialValidation.allAvailableContracts)
+                nonDefaultCelestialContracts.addAll(celestialValidation.nonDefaultAvailableContracts)
+
+                val parsedCelestialPool = jsonObject.get("celestialRewardPool")?.asJsonArray?.mapNotNull {
+                    val entry = CelestialRewardPoolEntry.fromJson(it.asJsonObject)
+                    when {
+                        entry == null -> null
+                        entry.value <= 0.0 -> {
+                            WingsContractsMod.LOGGER.warn(
+                                "Skipping celestialRewardPool entry with non-positive value (${entry.value}) at $resourceLocation"
+                            )
+                            null
+                        }
+                        entry.weight <= 0 -> {
+                            WingsContractsMod.LOGGER.warn(
+                                "Skipping celestialRewardPool entry with non-positive weight (${entry.weight}) at $resourceLocation"
+                            )
+                            null
+                        }
+                        else -> entry
+                    }
+                } ?: listOf()
+                allCelestialRewardPool.addAll(parsedCelestialPool)
+                if (!isDefault) {
+                    nonDefaultCelestialRewardPool.addAll(parsedCelestialPool)
+                }
             } catch (e: Exception) {
                 WingsContractsMod.LOGGER.error("Error while loading available contracts at $resourceLocation", e)
             }
@@ -161,6 +219,10 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
             nonDefaultDefaultRewards,
             fullRewardBlocklist,
             nonDefaultRewardBlocklist,
+            allCelestialContracts,
+            nonDefaultCelestialContracts,
+            allCelestialRewardPool,
+            nonDefaultCelestialRewardPool,
             version
         )
     }
@@ -244,6 +306,86 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
             nonDefaultAvailableContracts,
             skippedBecauseUnloaded
         )
+    }
+
+    fun validateCelestialContracts(
+        parsedContracts: List<ContractTag>,
+        resourceLocation: ResourceLocation,
+        isDefault: Boolean,
+    ): ValidatedContractsResult {
+        val allAvailable = mutableListOf<ContractTag>()
+        val nonDefaultAvailable = mutableListOf<ContractTag>()
+        var skippedBecauseUnloaded = 0
+
+        for (contract in parsedContracts) {
+            val targetItemKeys = contract.targetItemKeys ?: listOf()
+            val targetTagKeys = contract.targetTagKeys ?: listOf()
+            val targetBlockTagKeys = contract.targetBlockTagKeys ?: listOf()
+
+            val allItemsFailedLoad = targetItemKeys
+                .all { it.contains(':') && !Platform.isModLoaded(it.split(":")[0]) }
+            val allBlockTagsFailedLoad = targetBlockTagKeys
+                .all { it.contains(':') && !Platform.isModLoaded(it.split(":")[0].trimStart('#')) }
+            val isJustCondition = !contract.targetConditionsKeys.isNullOrBlank()
+                && targetItemKeys.isEmpty()
+                && targetTagKeys.isEmpty()
+                && targetBlockTagKeys.isEmpty()
+            // Celestials may also have no targets at all (they fall back to celestialCurrencyAnchor at load).
+            val isJustCurrency = targetItemKeys.isEmpty()
+                && targetTagKeys.isEmpty()
+                && targetBlockTagKeys.isEmpty()
+                && contract.targetConditionsKeys.isNullOrBlank()
+
+            val allFailedLoad = allItemsFailedLoad
+                && allBlockTagsFailedLoad
+                && !isJustCondition
+                && !isJustCurrency
+                && targetTagKeys.isEmpty()
+
+            val allRequiredModsLoaded = contract.requiresAll.isNullOrBlank()
+                || contract.requiresAll!!.split(',').all { Platform.isModLoaded(it) }
+            val anyRequiredModsLoaded = contract.requiresAny.isNullOrBlank()
+                || contract.requiresAny!!.split(',').any { Platform.isModLoaded(it) }
+
+            if (allFailedLoad || !allRequiredModsLoaded || !anyRequiredModsLoaded) {
+                if (!isDefault) {
+                    WingsContractsMod.LOGGER.warn(
+                        "Skipped custom celestial contract $contract because required mod was not found."
+                    )
+                }
+                skippedBecauseUnloaded++
+                continue
+            }
+            val blockedModFound = !contract.requiresNot.isNullOrBlank()
+                && contract.requiresNot!!.split(',').any { Platform.isModLoaded(it) }
+            if (blockedModFound) {
+                if (!isDefault) {
+                    WingsContractsMod.LOGGER.warn(
+                        "Skipped custom celestial contract $contract because blocked mod was found."
+                    )
+                }
+                continue
+            }
+
+            if ((contract.countPerUnit ?: 0) <= 0) {
+                WingsContractsMod.LOGGER.warn(
+                    "Celestial contract is missing countPerUnit (or it is non-positive): $contract"
+                )
+                continue
+            }
+            val loaded = CelestialContract.load(contract)
+            if (!loaded.reward.isValid) {
+                WingsContractsMod.LOGGER.warn("Celestial contract has no valid reward: $contract")
+                continue
+            }
+
+            allAvailable.add(contract)
+            if (!isDefault) nonDefaultAvailable.add(contract)
+        }
+
+        listOf(allAvailable, nonDefaultAvailable).forEach { removeEmptyTags(it) }
+
+        return ValidatedContractsResult(allAvailable, nonDefaultAvailable, skippedBecauseUnloaded)
     }
 
     fun removeEmptyTags(contractList: MutableList<ContractTag>) {

@@ -1,0 +1,298 @@
+{
+  "celestialContracts": [
+    {
+      "name": "wingscontracts.celestial.harvest_festival",
+      "description": "wingscontracts.celestial.harvest_festival.desc",
+      "targetItems": "minecraft:wheat",
+      "countPerUnit": 64,
+      "baseUnitsDemanded": 1,
+      "maxLevel": 1,
+      "cycleDurationMs": 115200000,
+      "decayEnabled": true,
+      "decayCyclesPerEvent": 1,
+      "decayLevelsPerEvent": 1,
+      "decayMinLevel": 0,
+      "maxLifetimeUnits": 0,
+      "reward": {
+        "id": "minecraft:enchanted_golden_apple",
+        "Count": 1
+      }
+    }
+  ],
+  "celestialRewardPool": [
+    {
+      "item": {
+        "id": "minecraft:diamond",
+        "Count": 1
+      },
+      "value": 32,
+      "weight": 5,
+      "name": "wingscontracts.celestial.pool.diamond_supply",
+      "shape": {
+        "maxLifetimeUnitsMax": 10
+      }
+    },
+    {
+      "item": {
+        "id": "minecraft:netherite_ingot",
+        "Count": 1
+      },
+      "value": 256,
+      "weight": 1,
+      "name": "wingscontracts.celestial.pool.netherite_supply",
+      "shape": {
+        "lifetimeUnitsMin": 1,
+        "lifetimeUnitsMax": 3,
+        "cycleDurationOptionsMs": [0, 604800000],
+        "cycleDurationWeights": [3, 1]
+      }
+    },
+    {
+      "commands": [
+        "effect give @s minecraft:hero_of_the_village 6000 1"
+    ],
+      "label": "wingscontracts.celestial.pool.hero_blessing.label",
+      "value": 8,
+      "weight": 4,
+      "name": "wingscontracts.celestial.pool.hero_blessing",
+      "description": "wingscontracts.celestial.pool.hero_blessing.desc",
+      "displayItem": {
+        "id": "minecraft:emerald",
+        "Count": 1
+      },
+      "shape": {
+        "unlimitedLifetimeUnitsChance": 1
+      }
+    },
+    {
+      "item": {
+        "id": "minecraft:totem_of_undying",
+        "Count": 1
+      },
+      "value": 64,
+      "weight": 2,
+      "name": "wingscontracts.celestial.pool.mended_pact",
+      "shape": {
+        "lifetimeUnitsMin": 1,
+        "lifetimeUnitsMax": 1,
+        "unlimitedLifetimeUnitsChance": 0.0
+      }
+    },
+    {
+      "item": {
+        "id": "minecraft:nautilus_shell",
+        "Count": 1
+      },
+      "value": 16,
+      "weight": 4,
+      "name": "wingscontracts.celestial.pool.mariners_pearl",
+      "shape": {
+        "lifetimeUnitsMin": 1,
+        "lifetimeUnitsMax": 12
+      }
+    },
+    {
+      "item": {
+        "id": "minecraft:ender_pearl",
+        "Count": 4
+      },
+      "value": 12,
+      "weight": 4,
+      "name": "wingscontracts.celestial.pool.skys_eye",
+      "shape": {
+        "lifetimeUnitsMin": 1,
+        "lifetimeUnitsMax": 16
+      }
+    },
+    {
+      "commands": [
+        "loot give @s loot minecraft:gameplay/fishing"
+      ],
+      "label": "wingscontracts.celestial.lucky_catch.reward",
+      "value": 8,
+      "weight": 5,
+      "name": "wingscontracts.celestial.lucky_catch",
+      "description": "wingscontracts.celestial.lucky_catch.desc",
+      "displayItem": {
+        "id": "minecraft:fishing_rod",
+        "Count": 1
+      },
+      "shape": {
+        "baseUnitsDemandedMax": 15,
+        "maxLifetimeUnitsMax": 30,
+        "expiresInMin": 7,
+        "expiresInMax": 30
+      }
+    },
+    {
+      "commands": [
+        "execute at @s anchored eyes rotated as @s positioned ^ ^ ^5 run summon minecraft:fireball ~ ~ ~ {ExplosionPower:1}",
+        "playsound minecraft:entity.ghast.shoot ambient @s ~ ~ ~ 1 0.5"
+      ],
+      "label": "wingscontracts.celestial.wrathful_sky.reward",
+      "value": 32.0,
+      "weight": 3,
+      "name": "wingscontracts.celestial.wrathful_sky",
+      "description": "wingscontracts.celestial.wrathful_sky.desc",
+      "displayItem": {
+        "id": "minecraft:fire_charge",
+        "Count": 1
+      },
+      "shape": {
+        "baseUnitsDemanded": 3,
+        "maxLevelMax": 10,
+        "neverExpiresChance": 0.5,
+        "unlimitedLifetimeUnitsChance": 0.5,
+        "expiresInMax": 30,
+        "maxLifetimeUnitsMax": 30
+      }
+    },
+    {
+      "item": {
+        "id": "minecraft:iron_axe",
+        "Count": 1,
+        "components": {
+          "minecraft:enchantments": {
+            "levels": {
+              "minecraft:sharpness": 3
+            }
+          }
+        }
+      },
+      "value": 24,
+      "weight": 3,
+      "name": "wingscontracts.celestial.pool.jonnys_axe",
+      "description": "wingscontracts.celestial.pool.jonnys_axe.desc",
+      "displayItem": {
+        "id": "minecraft:iron_axe",
+        "Count": 1
+      },
+      "shape": {
+        "lifetimeUnitsMin": 1,
+        "lifetimeUnitsMax": 1,
+        "unlimitedLifetimeUnitsChance": 0.0
+      }
+    },
+    {
+      "item": {
+        "id": "minecraft:suspicious_stew",
+        "Count": 1
+      },
+      "value": 4,
+      "weight": 7,
+      "name": "wingscontracts.celestial.pool.suspicious_stew",
+      "description": "wingscontracts.celestial.pool.suspicious_stew.desc",
+      "shape": {
+        "unlimitedLifetimeUnitsChance": 1,
+        "baseUnitsDemandedMax": 4
+      }
+    },
+    {
+      "commands": [
+        "summon minecraft:lightning_bolt ~ ~ ~"
+      ],
+      "label": "wingscontracts.celestial.pool.lightning_strike.label",
+      "value": 12,
+      "weight": 4,
+      "name": "wingscontracts.celestial.pool.lightning_strike",
+      "description": "wingscontracts.celestial.pool.lightning_strike.desc",
+      "displayItem": {
+        "id": "minecraft:lightning_rod",
+        "Count": 1
+      },
+      "shape": {
+        "unlimitedLifetimeUnitsChance": 1,
+        "neverExpiresChance": 0.3,
+        "maxLevelMax": 5
+      }
+    },
+    {
+      "commands": [
+        "spreadplayers ~ ~ 16 96 false @s"
+      ],
+      "label": "wingscontracts.celestial.pool.wayfarers_step.label",
+      "value": 6,
+      "weight": 5,
+      "name": "wingscontracts.celestial.pool.wayfarers_step",
+      "description": "wingscontracts.celestial.pool.wayfarers_step.desc",
+      "displayItem": {
+        "id": "minecraft:compass",
+        "Count": 1
+      },
+      "shape": {
+        "unlimitedLifetimeUnitsChance": 1
+      }
+    },
+    {
+      "commands": [
+        "effect give @s minecraft:water_breathing 1200 0 false"
+      ],
+      "label": "wingscontracts.celestial.pool.breath_of_life.label",
+      "value": 48,
+      "weight": 1,
+      "name": "wingscontracts.celestial.pool.breath_of_life",
+      "description": "wingscontracts.celestial.pool.breath_of_life.desc",
+      "displayItem": {
+        "id": "minecraft:turtle_helmet",
+        "Count": 1
+      },
+      "shape": {
+        "unlimitedLifetimeUnitsChance": 1,
+        "baseUnitsDemandedMax": 3
+      }
+    },
+    {
+      "commands": [
+        "effect give @s minecraft:water_breathing 30 0 false"
+      ],
+      "label": "wingscontracts.celestial.pool.emergency_air.label",
+      "value": 2,
+      "weight": 8,
+      "name": "wingscontracts.celestial.pool.emergency_air",
+      "description": "wingscontracts.celestial.pool.emergency_air.desc",
+      "displayItem": {
+        "id": "minecraft:bubble_coral_fan",
+        "Count": 1
+      },
+      "shape": {
+        "unlimitedLifetimeUnitsChance": 1
+      }
+    },
+    {
+      "commands": [
+        "effect give @s minecraft:night_vision 600 0 false"
+      ],
+      "label": "wingscontracts.celestial.pool.lanterns_gift.label",
+      "value": 4,
+      "weight": 6,
+      "name": "wingscontracts.celestial.pool.lanterns_gift",
+      "description": "wingscontracts.celestial.pool.lanterns_gift.desc",
+      "displayItem": {
+        "id": "minecraft:lantern",
+        "Count": 1
+      },
+      "shape": {
+        "lifetimeUnitsMax": 30
+      }
+    },
+    {
+      "commands": [
+        "loot give @s loot minecraft:chests/buried_treasure"
+      ],
+      "label": "wingscontracts.celestial.pool.buried_treasure.label",
+      "value": 32,
+      "weight": 2,
+      "name": "wingscontracts.celestial.pool.buried_treasure",
+      "description": "wingscontracts.celestial.pool.buried_treasure.desc",
+      "displayItem": {
+        "id": "minecraft:map",
+        "Count": 1
+      },
+      "shape": {
+        "lifetimeUnitsMin": 1,
+        "lifetimeUnitsMax": 5,
+        "unlimitedLifetimeUnitsChance": 0.05
+      }
+    }
+  ]
+}

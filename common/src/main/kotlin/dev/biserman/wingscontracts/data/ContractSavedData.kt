@@ -28,6 +28,7 @@ class ContractSavedData : SavedData() {
     val rarityThresholds by lazy { ModConfig.SERVER.rarityThresholdsString.get().split(",").map { it.toInt() } }
     val currencyHandler = DenominatedCurrenciesHandler()
     val generator by lazy { AbyssalContractGenerator(this) }
+    val celestialGenerator by lazy { CelestialContractGenerator(this) }
 
     override fun save(compoundTag: CompoundTag, provider: HolderLookup.Provider): CompoundTag {
         val contractListTag = CompoundTag()
@@ -80,8 +81,18 @@ class ContractSavedData : SavedData() {
 
     fun refresh(level: ServerLevel) {
         container.clearContent()
+        val celestialChance = ModConfig.SERVER.celestialContractInAbyssalPoolChance.get()
+        val celestialPoolHasEntries = ContractDataReloadListener.data.availableCelestialRewardPool.isNotEmpty()
         for (i in 0..<container.containerSize) {
-            container.items[i] = generator.generateContract(ContractDataReloadListener.randomTag()).createItem()
+            val rollCelestial = celestialChance > 0.0
+                && celestialPoolHasEntries
+                && random.nextDouble() < celestialChance
+            container.items[i] = if (rollCelestial) {
+                celestialGenerator.generateContract()?.createItem()
+                    ?: generator.generateContract(ContractDataReloadListener.randomTag()).createItem()
+            } else {
+                generator.generateContract(ContractDataReloadListener.randomTag()).createItem()
+            }
         }
         LoadedContracts.clear()
         NetworkManager.sendToPlayers(level.players(), SyncAvailableContractsPacket(level))

@@ -11,6 +11,10 @@ data class ContractResourceData(
     val nonDefaultDefaultRewards: List<RewardBagEntry>, // funny name, but it refers to custom-specified default rewards,
     val fullRewardBlocklist: List<String>,
     val nonDefaultRewardBlocklist: List<String>,
+    val allAvailableCelestialContracts: List<ContractTag>,
+    val nonDefaultAvailableCelestialContracts: List<ContractTag>,
+    val allAvailableCelestialRewardPool: List<CelestialRewardPoolEntry>,
+    val nonDefaultAvailableCelestialRewardPool: List<CelestialRewardPoolEntry>,
     val version: Int,
 ) {
     constructor() : this(
@@ -20,6 +24,10 @@ data class ContractResourceData(
         nonDefaultDefaultRewards = listOf(),
         fullRewardBlocklist = listOf(),
         nonDefaultRewardBlocklist = listOf(),
+        allAvailableCelestialContracts = listOf(),
+        nonDefaultAvailableCelestialContracts = listOf(),
+        allAvailableCelestialRewardPool = listOf(),
+        nonDefaultAvailableCelestialRewardPool = listOf(),
         version = 0,
     )
 
@@ -47,5 +55,19 @@ data class ContractResourceData(
             nonDefaultRewardBlocklist.toList()
         } else {
             fullRewardBlocklist.toList()
+        }
+
+    val availableCelestialContracts
+        get() = if (ModConfig.SERVER.disableDefaultCelestialContractOptions.get()) {
+            nonDefaultAvailableCelestialContracts.toList()
+        } else {
+            allAvailableCelestialContracts.toList()
+        }
+
+    val availableCelestialRewardPool
+        get() = if (ModConfig.SERVER.disableDefaultCelestialContractOptions.get()) {
+            nonDefaultAvailableCelestialRewardPool.toList()
+        } else {
+            allAvailableCelestialRewardPool.toList()
         }
 }
