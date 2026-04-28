@@ -6,6 +6,7 @@ import net.neoforged.neoforge.common.ModConfigSpec
 class ModServerConfig(builder: ModConfigSpec.Builder) {
     val denominations: ModConfigSpec.ConfigValue<String>
     val abyssalContractGrowthFunction: ModConfigSpec.EnumValue<GrowthFunctionOptions>
+    val abyssalContractDecayFunction: ModConfigSpec.EnumValue<DecayFunctionOptions>
     val abyssalContractsPoolRefreshPeriodMs: ModConfigSpec.LongValue
     val abyssalContractsPoolOptions: ModConfigSpec.IntValue
     val abyssalContractsPoolPicks: ModConfigSpec.IntValue
@@ -22,15 +23,27 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
     val announceCycleLeaderboard: ModConfigSpec.IntValue
 
     // Contract Defaults
+    // Generation
     val defaultRewardMultiplier: ModConfigSpec.DoubleValue
     val defaultUnitsDemandedMultiplier: ModConfigSpec.DoubleValue
     val defaultCountPerUnitMultiplier: ModConfigSpec.DoubleValue
-    val defaultCycleDurationMs: ModConfigSpec.LongValue
     val defaultAuthor: ModConfigSpec.ConfigValue<String>
-    val defaultMaxLevel: ModConfigSpec.ConfigValue<Int>
-    val defaultQuantityGrowthFactor: ModConfigSpec.DoubleValue
+
+    // Lifetime
+    val defaultCycleDurationMs: ModConfigSpec.LongValue
     val defaultExpiresIn: ModConfigSpec.ConfigValue<Int>
     val defaultMaxFulfilments: ModConfigSpec.ConfigValue<Int>
+
+    // Leveling
+    val defaultMaxLevel: ModConfigSpec.ConfigValue<Int>
+    val defaultQuantityGrowthFactor: ModConfigSpec.DoubleValue
+
+    // Decay
+    val defaultDecayEnabled: ModConfigSpec.BooleanValue
+    val defaultDecayCyclesPerEvent: ModConfigSpec.IntValue
+    val defaultDecayLevelsPerEvent: ModConfigSpec.IntValue
+    val defaultDecayPercentPerEvent: ModConfigSpec.DoubleValue
+    val defaultDecayMinLevel: ModConfigSpec.IntValue
 
     init {
         builder.push("General")
@@ -45,11 +58,21 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
 
         abyssalContractGrowthFunction = builder.comment(
             """
-            The function that determines how a contract's quantity demanded increases as it levels up. 
+            The function that determines how a contract's quantity demanded increases as it levels up.
             LINEAR: unitsDemanded = baseUnitsDemanded + baseUnitsDemanded * (growthFactor - 1) * (level - 1)
             EXPONENTIAL: unitsDemanded = baseUnitsDemanded * growthFactor ** (level - 1)
             """.trimIndent()
         ).defineEnum("abyssalContractGrowthFunction", GrowthFunctionOptions.EXPONENTIAL)
+
+        abyssalContractDecayFunction = builder.comment(
+            """
+            The function that determines how a contract loses level when its cycle ends without being completed.
+            Individual contracts can override this via a "decayFunction" tag in their datapack JSON ("FIXED" or "PERCENTAGE").
+            FIXED: each decay event removes defaultDecayLevelsPerEvent levels.
+            PERCENTAGE: each decay event removes defaultDecayPercentPerEvent fraction of the current level (floored).
+              Always loses at least 1 level when defaultDecayPercentPerEvent > 0; set it to 0 to disable PERCENTAGE decay.
+            """.trimIndent()
+        ).defineEnum("abyssalContractDecayFunction", DecayFunctionOptions.FIXED)
 
         abyssalContractsPoolRefreshPeriodMs =
             builder.comment(
@@ -135,6 +158,7 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
         builder.pop()
         builder.push("Contract Defaults")
 
+        // Generation
         defaultRewardMultiplier =
             builder.comment("Datapacked contracts with an unspecified or integer reward will have their reward count multiplied by this factor, then rounded (to a minimum of 1).")
                 .defineInRange("defaultRewardMultiplier", 1.0, 0.0, Double.MAX_VALUE)
@@ -147,10 +171,6 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
             builder.comment("All new Abyssal Contracts pulled from the pool will have their count demanded per unit multiplied by this factor, then rounded (to a minimum of 1).")
                 .defineInRange("defaultCountPerUnitMultiplier", 1.0, 0.0, Double.MAX_VALUE)
 
-        defaultCycleDurationMs =
-            builder.comment("The default length of a cycle period, in milliseconds. E.g.: 86400000 for one day, 604800000 for one week.")
-                .defineInRange("defaultCycleDurationMs", 86400000L, 60_000, Long.MAX_VALUE)
-
         defaultAuthor =
             builder.comment(
                 """
@@ -161,16 +181,10 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
             )
                 .define("defaultAuthor", "${WingsContractsMod.MOD_ID}.default_author")
 
-        defaultMaxLevel =
-            builder.comment("The default max level for Abyssal Contracts. If negative or zero, the contract will have no max level. If one, Abyssal Contracts will never level up.")
-                .define("defaultMaxLevel", 10)
-
-        defaultQuantityGrowthFactor = builder.comment(
-            """
-            The default quantity growth factor for Abyssal Contracts.
-            See abyssalContractGrowthFunction above to see how this is used.
-            """.trimIndent()
-        ).defineInRange("defaultQuantityGrowthFactor", 2.0, 0.00001, 100.0)
+        // Lifetime
+        defaultCycleDurationMs =
+            builder.comment("The default length of a cycle period, in milliseconds. E.g.: 86400000 for one day, 604800000 for one week.")
+                .defineInRange("defaultCycleDurationMs", 86400000L, 60_000, Long.MAX_VALUE)
 
         defaultExpiresIn =
             builder.comment(
@@ -187,6 +201,56 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
                 When set to 0 or a negative value, contracts have no fulfilment cap.
                 """.trimIndent()
             ).define("defaultMaxFulfilments", 0)
+
+        // Leveling
+        defaultMaxLevel =
+            builder.comment("The default max level for Abyssal Contracts. If negative or zero, the contract will have no max level. If one, Abyssal Contracts will never level up.")
+                .define("defaultMaxLevel", 10)
+
+        defaultQuantityGrowthFactor = builder.comment(
+            """
+            The default quantity growth factor for Abyssal Contracts.
+            See abyssalContractGrowthFunction above to see how this is used.
+            """.trimIndent()
+        ).defineInRange("defaultQuantityGrowthFactor", 2.0, 0.00001, 100.0)
+
+        // Decay
+        defaultDecayEnabled =
+            builder.comment(
+                """
+                If true, contracts that finish a cycle without being completed will lose levels over time.
+                """.trimIndent()
+            ).define("defaultDecayEnabled", false)
+
+        defaultDecayCyclesPerEvent =
+            builder.comment(
+                """
+                How many missed cycles between decay events.
+                1 = decay each cycle that ends incomplete; 4 = decay once every 4 missed cycles.
+                Set to 0 to disable decay regardless of defaultDecayEnabled.
+                """.trimIndent()
+            ).defineInRange("defaultDecayCyclesPerEvent", 1, 0, Int.MAX_VALUE)
+
+        defaultDecayLevelsPerEvent =
+            builder.comment("if FIXED decay, the number of levels that are removed per decay event. Set to 0 to disable FIXED decay.")
+                .defineInRange("defaultDecayLevelsPerEvent", 1, 0, Int.MAX_VALUE)
+
+        defaultDecayPercentPerEvent =
+            builder.comment(
+                """
+                if PERCENTAGE decay, the fraction of the current level removed per decay event (floored).
+                Always loses at least 1 level when nonzero; set to 0 to disable PERCENTAGE decay.
+                """.trimIndent()
+            ).defineInRange("defaultDecayPercentPerEvent", 0.25, 0.0, 1.0)
+
+        defaultDecayMinLevel =
+            builder.comment(
+                """
+                Floor that decay cannot drop the contract below.
+                Set to 1 (default) to roll back gains without ever expiring the contract.
+                Set to 0 to allow decay to drop the contract to level 0, deactivating it like an expired contract.
+                """.trimIndent()
+            ).defineInRange("defaultDecayMinLevel", 1, 0, Int.MAX_VALUE)
 
         builder.pop()
     }

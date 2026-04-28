@@ -3,6 +3,7 @@ package dev.biserman.wingscontracts.core
 import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.compat.computercraft.DetailsHelper.details
+import dev.biserman.wingscontracts.config.DecayFunctionOptions
 import dev.biserman.wingscontracts.config.GrowthFunctionOptions
 import dev.biserman.wingscontracts.config.ModConfig
 import dev.biserman.wingscontracts.data.ContractSavedData
@@ -23,22 +24,26 @@ import java.util.*
 import kotlin.reflect.full.memberProperties
 
 class AbyssalContract(
+    // Identity & targeting
     id: UUID,
     targetItems: List<Item>,
     targetTags: List<TagKey<Item>>,
     targetBlockTags: List<TagKey<Block>>,
     targetConditions: List<ItemCondition>,
 
+    // Cycle timing
     startTime: Long,
     currentCycleStart: Long,
     cycleDurationMs: Long,
 
+    // Demand & fulfillment
     countPerUnit: Int,
     baseUnitsDemanded: Int,
     unitsFulfilled: Int,
     unitsFulfilledEver: Long,
     expiresIn: Int,
 
+    // Display metadata
     author: String,
     name: String?,
     description: String?,
@@ -48,10 +53,21 @@ class AbyssalContract(
 
     reward: ContractReward,
 
+    // Leveling
     level: Int,
     quantityGrowthFactor: Double,
     maxLevel: Int,
 
+    // Decay
+    decayEnabled: Boolean,
+    decayCyclesPerEvent: Int,
+    decayLevelsPerEvent: Int,
+    decayPercentPerEvent: Double,
+    decayMinLevel: Int,
+    decayProgress: Int,
+    decayFunctionOverride: DecayFunctionOptions?,
+
+    // State
     isActive: Boolean,
     maxFulfilments: Int,
     isInitialized: Boolean,
@@ -81,6 +97,13 @@ class AbyssalContract(
     level,
     quantityGrowthFactor,
     maxLevel,
+    decayEnabled,
+    decayCyclesPerEvent,
+    decayLevelsPerEvent,
+    decayPercentPerEvent,
+    decayMinLevel,
+    decayProgress,
+    decayFunctionOverride,
     isActive,
     maxFulfilments,
     isInitialized,
@@ -90,6 +113,8 @@ class AbyssalContract(
     override val item: Item get() = ModItemRegistry.ABYSSAL_CONTRACT.get()
     override val growthFunction: GrowthFunctionOptions
         get() = ModConfig.SERVER.abyssalContractGrowthFunction.get()
+    override val defaultDecayFunction: DecayFunctionOptions
+        get() = ModConfig.SERVER.abyssalContractDecayFunction.get()
 
     override fun getDisplayName(rarity: Int): MutableComponent {
         val rarityString = Component.translatable("${WingsContractsMod.MOD_ID}.rarity.${rarity}").string
@@ -235,28 +260,60 @@ class AbyssalContract(
             }.toMutableMap()
 
     companion object {
+        private fun warnAndClampInt(name: String, raw: Int, min: Int, max: Int, write: (Int) -> Unit): Int {
+            val clamped = raw.coerceIn(min, max)
+            if (clamped != raw) {
+                WingsContractsMod.LOGGER.warn(
+                    "Contract field '$name'=$raw is out of range [$min..$max]; clamping to $clamped"
+                )
+                write(clamped)
+            }
+            return clamped
+        }
+
+        private fun warnAndClampDouble(
+            name: String, raw: Double, min: Double, max: Double, write: (Double) -> Unit
+        ): Double {
+            val clamped = raw.coerceIn(min, max)
+            if (clamped != raw) {
+                WingsContractsMod.LOGGER.warn(
+                    "Contract field '$name'=$raw is out of range [$min..$max]; clamping to $clamped"
+                )
+                write(clamped)
+            }
+            return clamped
+        }
+
         fun load(tag: ContractTag, data: ContractSavedData? = null): AbyssalContract {
             val reward = tag.reward ?: Reward.Random(1.0)
             return AbyssalContract(
+                // Identity & targeting
                 id = tag.id ?: UUID.randomUUID(),
                 targetItems = tag.targetItems ?: listOf(),
                 targetTags = tag.targetTags ?: listOf(),
                 targetBlockTags = tag.targetBlockTags ?: listOf(),
                 targetConditions = tag.targetConditions ?: listOf(),
+
+                // Cycle timing
                 startTime = tag.startTime ?: System.currentTimeMillis(),
                 currentCycleStart = tag.currentCycleStart ?: System.currentTimeMillis(),
                 cycleDurationMs = tag.cycleDurationMs ?: ModConfig.SERVER.defaultCycleDurationMs.get(),
+
+                // Demand & fulfillment
                 countPerUnit = tag.countPerUnit ?: 64,
                 baseUnitsDemanded = tag.baseUnitsDemanded ?: 64,
                 unitsFulfilled = tag.unitsFulfilled ?: 0,
                 unitsFulfilledEver = tag.unitsFulfilledEver ?: 0,
                 expiresIn = tag.expiresIn ?: ModConfig.SERVER.defaultExpiresIn.get(),
+
+                // Display metadata
                 author = tag.author ?: ModConfig.SERVER.defaultAuthor.get(),
                 name = tag.name,
                 description = tag.description,
                 shortTargetList = tag.shortTargetList,
                 displayItem = tag.displayItem,
                 rarity = tag.rarity,
+
                 reward = when (reward) {
                     is Reward.Defined -> ContractReward.Items(reward.itemStack)
                     is Reward.Random -> ContractReward.Items(
@@ -264,13 +321,43 @@ class AbyssalContract(
                     )
                     is Reward.Commands -> ContractReward.Commands(reward.commands, reward.label, reward.value)
                 },
+
+                // Leveling
                 level = tag.level ?: 1,
                 quantityGrowthFactor = tag.quantityGrowthFactor
                     ?: ModConfig.SERVER.defaultQuantityGrowthFactor.get(),
                 maxLevel = tag.maxLevel ?: ModConfig.SERVER.defaultMaxLevel.get(),
+
+                // Decay
+                decayEnabled = tag.decayEnabled ?: ModConfig.SERVER.defaultDecayEnabled.get(),
+                decayCyclesPerEvent = warnAndClampInt(
+                    "decayCyclesPerEvent",
+                    tag.decayCyclesPerEvent ?: ModConfig.SERVER.defaultDecayCyclesPerEvent.get(),
+                    0, Int.MAX_VALUE,
+                ) { tag.decayCyclesPerEvent = it },
+                decayLevelsPerEvent = warnAndClampInt(
+                    "decayLevelsPerEvent",
+                    tag.decayLevelsPerEvent ?: ModConfig.SERVER.defaultDecayLevelsPerEvent.get(),
+                    0, Int.MAX_VALUE,
+                ) { tag.decayLevelsPerEvent = it },
+                decayPercentPerEvent = warnAndClampDouble(
+                    "decayPercentPerEvent",
+                    tag.decayPercentPerEvent ?: ModConfig.SERVER.defaultDecayPercentPerEvent.get(),
+                    0.0, 1.0,
+                ) { tag.decayPercentPerEvent = it },
+                decayMinLevel = warnAndClampInt(
+                    "decayMinLevel",
+                    tag.decayMinLevel ?: ModConfig.SERVER.defaultDecayMinLevel.get(),
+                    0, Int.MAX_VALUE,
+                ) { tag.decayMinLevel = it },
+                decayProgress = (tag.decayProgress ?: 0).coerceAtLeast(0),
+                decayFunctionOverride = tag.decayFunction,
+
+                // State
                 isActive = tag.isActive ?: true,
                 maxFulfilments = tag.maxFulfilments ?: ModConfig.SERVER.defaultMaxFulfilments.get(),
                 isInitialized = tag.isInitialized ?: false,
+
                 currencyAnchor = tag.currencyAnchorItem(),
             )
         }

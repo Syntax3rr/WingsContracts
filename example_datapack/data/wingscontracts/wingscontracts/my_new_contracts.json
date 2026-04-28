@@ -74,6 +74,13 @@
       "description": "accepts edible items"
     },
     {
+      "targetItems": "minecraft:diamond",
+      "countPerUnit": 4,
+      "reward": 2,
+      "maxFulfilments": 32,
+      "description": "limited-use contract: deactivates after 32 total units fulfilled"
+    },
+    {
       "targetItems": "wheat",
       "countPerUnit": 64,
       "reward": {
@@ -85,6 +92,40 @@
         "value": 1
       },
       "description": "command reward example"
+    },
+    {
+      "targetItems": "minecraft:wheat",
+      "countPerUnit": 64,
+      "reward": 1,
+      "decayEnabled": true,
+      "description": "decays at the global default if a cycle ends without being completed"
+    },
+    {
+      "targetItems": "minecraft:emerald",
+      "countPerUnit": 8,
+      "reward": 4,
+      "decayEnabled": true,
+      "decayCyclesPerEvent": 4,
+      "decayLevelsPerEvent": 1,
+      "decayMinLevel": 1,
+      "description": "paced decay: loses 1 level every 4 missed cycles, never expires"
+    },
+    {
+      "targetItems": "minecraft:netherite_ingot",
+      "countPerUnit": 1,
+      "reward": 32,
+      "decayEnabled": true,
+      "decayCyclesPerEvent": 1,
+      "decayLevelsPerEvent": 2,
+      "decayMinLevel": 0,
+      "description": "harsh decay: loses 2 levels per missed cycle and can decay all the way to expiry"
+    },
+    {
+      "targetItems": "minecraft:gold_ingot",
+      "countPerUnit": 16,
+      "reward": 1,
+      "decayEnabled": false,
+      "description": "opts out of decay even if the server has it on globally"
     }
   ],
   "rewards": [

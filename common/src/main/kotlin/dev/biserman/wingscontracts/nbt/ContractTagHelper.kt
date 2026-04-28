@@ -4,6 +4,7 @@ package dev.biserman.wingscontracts.nbt
 
 import com.google.gson.JsonObject
 import com.mojang.serialization.JsonOps
+import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.config.ModConfig
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.component.DataComponents
@@ -89,6 +90,24 @@ object ContractTagHelper {
     fun boolean(key: String? = null) = Property(
         key, safeGet(CompoundTag::getBoolean), CompoundTag::putBoolean
     )
+
+    inline fun <reified T : Enum<T>> enum(key: String? = null): Property<T> {
+        val getFn: (CompoundTag).(String) -> T? = { name ->
+            val raw = this.getString(name)
+            if (raw.isEmpty()) null else try {
+                enumValueOf<T>(raw)
+            } catch (_: IllegalArgumentException) {
+                WingsContractsMod.LOGGER.warn(
+                    "Failed to parse '$raw' as ${T::class.simpleName} for key '$name'; valid values: ${
+                        enumValues<T>().joinToString { it.name }
+                    }"
+                )
+                null
+            }
+        }
+        val putFn: (CompoundTag).(String, T) -> Unit = { putKey, value -> this.putString(putKey, value.name) }
+        return Property(key, getFn, putFn)
+    }
 
     fun reward(key: String? = null) =
         Property(key, safeGet {
