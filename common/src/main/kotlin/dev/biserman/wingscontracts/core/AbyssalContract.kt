@@ -69,7 +69,7 @@ class AbyssalContract(
 
     // State
     isActive: Boolean,
-    maxFulfilments: Int,
+    maxLifetimeUnits: Int,
     isInitialized: Boolean,
 
     currencyAnchor: Item? = null,
@@ -105,7 +105,7 @@ class AbyssalContract(
     decayProgress,
     decayFunctionOverride,
     isActive,
-    maxFulfilments,
+    maxLifetimeUnits,
     isInitialized,
     currencyAnchor,
 ) {
@@ -355,7 +355,7 @@ class AbyssalContract(
 
                 // State
                 isActive = tag.isActive ?: true,
-                maxFulfilments = tag.maxFulfilments ?: ModConfig.SERVER.defaultMaxFulfilments.get(),
+                maxLifetimeUnits = tag.maxLifetimeUnits ?: ModConfig.SERVER.defaultMaxLifetimeUnits.get(),
                 isInitialized = tag.isInitialized ?: false,
 
                 currencyAnchor = tag.currencyAnchorItem(),

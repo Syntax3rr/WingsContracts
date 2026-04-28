@@ -78,8 +78,8 @@ class ContractItem(properties: Properties) : Item(properties) {
         val (filled, total) = when {
             contract is ServerContract && !contract.willCapBeforeLevelUp ->
                 contract.unitsFulfilled.toFloat() to contract.unitsDemanded.toFloat()
-            contract.maxFulfilments > 0 ->
-                contract.unitsFulfilledEver.toFloat() to contract.maxFulfilments.toFloat()
+            contract.maxLifetimeUnits > 0 ->
+                contract.unitsFulfilledEver.toFloat() to contract.maxLifetimeUnits.toFloat()
             else -> return 0
         }
         if (total <= 0f) return 0

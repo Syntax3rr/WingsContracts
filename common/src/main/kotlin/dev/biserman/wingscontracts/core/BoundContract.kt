@@ -54,7 +54,7 @@ class BoundContract(
     val matchingContractId: UUID,
 
     isActive: Boolean,
-    maxFulfilments: Int,
+    maxLifetimeUnits: Int,
 
     currencyAnchor: Item? = null,
 ) : Contract(
@@ -73,7 +73,7 @@ class BoundContract(
     null,
     null,
     isActive,
-    maxFulfilments,
+    maxLifetimeUnits,
     currencyAnchor,
 ) {
     override val type get() = ContractType.BOUND
@@ -336,7 +336,7 @@ class BoundContract(
                 name = tag.name,
                 matchingContractId = tag.matchingContractId ?: UUID.randomUUID(),
                 isActive = tag.isActive ?: true,
-                maxFulfilments = tag.maxFulfilments ?: ModConfig.SERVER.defaultMaxFulfilments.get(),
+                maxLifetimeUnits = tag.maxLifetimeUnits ?: ModConfig.SERVER.defaultMaxLifetimeUnits.get(),
                 currencyAnchor = derivedAnchor,
             )
         }

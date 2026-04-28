@@ -77,7 +77,7 @@
       "targetItems": "minecraft:diamond",
       "countPerUnit": 4,
       "reward": 2,
-      "maxFulfilments": 32,
+      "maxLifetimeUnits": 32,
       "description": "limited-use contract: deactivates after 32 total units fulfilled"
     },
     {

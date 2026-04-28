@@ -32,7 +32,7 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
     // Lifetime
     val defaultCycleDurationMs: ModConfigSpec.LongValue
     val defaultExpiresIn: ModConfigSpec.ConfigValue<Int>
-    val defaultMaxFulfilments: ModConfigSpec.ConfigValue<Int>
+    val defaultMaxLifetimeUnits: ModConfigSpec.ConfigValue<Int>
 
     // Leveling
     val defaultMaxLevel: ModConfigSpec.ConfigValue<Int>
@@ -194,13 +194,13 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
                 """.trimIndent()
             ).define("defaultExpiresIn", -1)
 
-        defaultMaxFulfilments =
+        defaultMaxLifetimeUnits =
             builder.comment(
                 """
                 The default cap on a contract's total units fulfilled before it deactivates.
-                When set to 0 or a negative value, contracts have no fulfilment cap.
+                When set to 0 or a negative value, contracts have no lifetime-units cap.
                 """.trimIndent()
-            ).define("defaultMaxFulfilments", 0)
+            ).define("defaultMaxLifetimeUnits", 0)
 
         // Leveling
         defaultMaxLevel =

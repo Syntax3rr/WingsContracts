@@ -62,7 +62,7 @@ abstract class Contract(
     val rarity: Int? = null,
 
     var isActive: Boolean = true,
-    val maxFulfilments: Int = 0,
+    val maxLifetimeUnits: Int = 0,
 
     val currencyAnchor: Item? = null,
 ) {
@@ -111,7 +111,7 @@ abstract class Contract(
     internal fun recordFulfilment(units: Int, tag: ContractTag) {
         unitsFulfilledEver += units
         tag.unitsFulfilledEver = unitsFulfilledEver
-        if (maxFulfilments > 0 && unitsFulfilledEver >= maxFulfilments) {
+        if (maxLifetimeUnits > 0 && unitsFulfilledEver >= maxLifetimeUnits) {
             isActive = false
             tag.isActive = isActive
         }
@@ -414,7 +414,7 @@ abstract class Contract(
         tag.shortTargetList = shortTargetList
         tag.displayItem = displayItem
         tag.isActive = isActive
-        tag.maxFulfilments = maxFulfilments
+        tag.maxLifetimeUnits = maxLifetimeUnits
         tag.currencyAnchor = currencyAnchor?.let { BuiltInRegistries.ITEM.getKey(it)?.toString() }
 
         return tag
@@ -447,7 +447,7 @@ abstract class Contract(
         var (ContractTag).id by uuid()
 
         var (ContractTag).isActive by boolean()
-        var (ContractTag).maxFulfilments by int()
+        var (ContractTag).maxLifetimeUnits by int()
         var (ContractTag).currencyAnchor by string()
 
         fun (ContractTag).currencyAnchorItem(): Item? {

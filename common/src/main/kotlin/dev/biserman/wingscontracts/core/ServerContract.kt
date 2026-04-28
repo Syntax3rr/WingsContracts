@@ -79,7 +79,7 @@ abstract class ServerContract(
 
     // State
     isActive: Boolean,
-    maxFulfilments: Int,
+    maxLifetimeUnits: Int,
     var isInitialized: Boolean,
 
     currencyAnchor: Item? = null,
@@ -99,7 +99,7 @@ abstract class ServerContract(
     displayItem,
     rarity,
     isActive,
-    maxFulfilments,
+    maxLifetimeUnits,
     currencyAnchor,
 ) {
     abstract val growthFunction: GrowthFunctionOptions
@@ -117,9 +117,9 @@ abstract class ServerContract(
     override val rewardPerUnit get() = reward.rewardPerUnit
     override val isComplete get() = unitsFulfilled >= unitsDemanded
 
-    /** True when `maxFulfilments` will complete before we hit `unitsDemanded`. */
+    /** True when `maxLifetimeUnits` will complete before we hit `unitsDemanded`. */
     val willCapBeforeLevelUp: Boolean
-        get() = maxFulfilments in 1..unitsDemanded
+        get() = maxLifetimeUnits in 1..unitsDemanded
 
     val unitsDemanded: Int get() = unitsDemandedAtLevel(level)
 
