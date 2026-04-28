@@ -97,7 +97,7 @@ object ContractTagHelper {
                 return@safeGet Reward.Random(loadedValue)
             } else if (this.contains(it)) {
                 val compound = this.getCompound(it)
-                if (compound.getString("type") == "commands") {
+                if (compound.contains("commands", Tag.TAG_LIST.toInt())) {
                     val list = compound.getList("commands", Tag.TAG_STRING.toInt())
                     val commands = (0 until list.size).map { i -> list.getString(i) }
                     val label = compound.getString("label")
@@ -125,7 +125,6 @@ object ContractTagHelper {
 
                 is Reward.Commands -> {
                     val tag = CompoundTag()
-                    tag.putString("type", "commands")
                     val list = ListTag()
                     value.commands.forEach { list.add(StringTag.valueOf(it)) }
                     tag.put("commands", list)

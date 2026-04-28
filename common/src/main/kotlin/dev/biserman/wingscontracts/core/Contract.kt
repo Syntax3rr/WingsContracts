@@ -379,6 +379,7 @@ abstract class Contract(
                             leftover -= take
                         }
                     }
+                    portal.normalizeCurrencyInput(this)
                 }
             }
         }

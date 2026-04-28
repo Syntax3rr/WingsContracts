@@ -245,9 +245,11 @@ class ContractPortalBlockEntity(
                         }
                     }
 
-                    portal.normalizeCurrencyInput(contract)
-                    val didConsume = portal.tryConsume(contract, contractTag)
                     val didSuck = portal.suckInItems(contract, level)
+                    if (didSuck) {
+                        portal.normalizeCurrencyInput(contract)
+                    }
+                    val didConsume = portal.tryConsume(contract, contractTag)
                     val didUpdate = contract.tryUpdateTick(contractTag)
 
                     if (didConsume && contract is ServerContract && contract.isComplete) {
@@ -615,6 +617,7 @@ class ContractPortalBlockEntity(
     override fun setItem(i: Int, itemStack: ItemStack) {
         if (i < inputSlotsCount) {
             cachedInput.setItem(i, itemStack)
+            LoadedContracts[contractSlot]?.let { normalizeCurrencyInput(it) }
         } else {
             cachedRewards.setItem(i - inputSlotsCount, itemStack)
         }

@@ -185,7 +185,6 @@ class ModServerConfig(builder: ModConfigSpec.Builder) {
                 """
                 The default cap on a contract's total units fulfilled before it deactivates.
                 When set to 0 or a negative value, contracts have no fulfilment cap.
-                Per-contract overrides via the datapack `maxFulfilments` field take precedence.
                 """.trimIndent()
             ).define("defaultMaxFulfilments", 0)
 

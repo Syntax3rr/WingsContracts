@@ -238,10 +238,6 @@ abstract class ServerContract(
             return components
         }
 
-        if (willCapBeforeLevelUp) {
-            return components
-        }
-
         val start = if (isInitialized) currentCycleStart else System.currentTimeMillis()
         val nextCycleStart = start + cycleDurationMs
         val timeRemaining = nextCycleStart - System.currentTimeMillis()

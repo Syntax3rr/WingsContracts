@@ -72,6 +72,19 @@
       "targetConditions": "isEdible==true",
       "countPerUnit": 32,
       "description": "accepts edible items"
+    },
+    {
+      "targetItems": "wheat",
+      "countPerUnit": 64,
+      "reward": {
+        "commands": [
+          "give @p minecraft:bread 8",
+          "xp add @p 10 levels"
+        ],
+        "label": "8 bread + 10 levels",
+        "value": 1
+      },
+      "description": "command reward example"
     }
   ],
   "rewards": [
