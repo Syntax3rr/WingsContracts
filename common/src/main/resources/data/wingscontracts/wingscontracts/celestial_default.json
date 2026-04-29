@@ -208,7 +208,7 @@
     },
     {
       "commands": [
-        "spreadplayers ~ ~ 16 96 false @s"
+        "spreadplayers ~ ~ 100 1000 false @s"
       ],
       "label": "wingscontracts.celestial.pool.wayfarers_step.label",
       "value": 6,
