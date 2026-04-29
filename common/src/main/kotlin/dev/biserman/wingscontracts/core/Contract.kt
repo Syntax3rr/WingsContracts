@@ -2,7 +2,7 @@ package dev.biserman.wingscontracts.core
 
 import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
-import dev.biserman.wingscontracts.data.ContractSavedData
+import dev.biserman.wingscontracts.config.DenominatedCurrenciesHandler
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
@@ -81,7 +81,7 @@ abstract class Contract(
             }
         }
 
-        if (currencyAnchor != null) {
+        if (currencyAnchor != null && allTargetsInCurrencyGroup) {
             return denominationMap()?.containsKey(itemStack.item) == true
         }
 
@@ -101,9 +101,16 @@ abstract class Contract(
         return targetConditions.isNotEmpty() // blank contracts return false unless they have nbt conditions
     }
 
+    private val allTargetsInCurrencyGroup: Boolean
+        get() {
+            if (targetTags.isNotEmpty() || targetBlockTags.isNotEmpty()) return false
+            val denominations = denominationMap() ?: return false
+            return targetItems.all { denominations.containsKey(it) }
+        }
+
     private fun denominationMap(): Map<Item, Double>? {
         val anchor = currencyAnchor ?: return null
-        return ContractSavedData.fakeData.currencyHandler.itemToCurrencyMap[anchor]
+        return DenominatedCurrenciesHandler.instance.itemToCurrencyMap[anchor]
     }
 
     open val isDisabled get() = !isActive
@@ -284,7 +291,7 @@ abstract class Contract(
     }
 
     open fun countConsumableUnits(items: NonNullList<ItemStack>): Int {
-        val denominations = denominationMap()
+        val denominations = denominationMap()?.takeIf { allTargetsInCurrencyGroup }
         if (denominations != null) {
             val unitValue = unitValueInDenominations(denominations)
             if (unitValue <= 0) return 0
@@ -307,7 +314,7 @@ abstract class Contract(
     abstract fun tryConsumeFromItems(tag: ContractTag, portal: ContractPortalBlockEntity): ConsumeResult
 
     open fun consumeUnits(unitCount: Int, portal: ContractPortalBlockEntity): List<ItemStack> {
-        val denominations = denominationMap()
+        val denominations = denominationMap()?.takeIf { allTargetsInCurrencyGroup }
         if (denominations != null) {
             return consumeCurrencyUnits(unitCount, portal, denominations)
         }

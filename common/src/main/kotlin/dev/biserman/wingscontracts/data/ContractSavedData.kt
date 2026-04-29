@@ -26,7 +26,7 @@ class ContractSavedData : SavedData() {
     val nextCycleStart get() = currentCycleStart + ModConfig.SERVER.abyssalContractsPoolRefreshPeriodMs.get()
 
     val rarityThresholds by lazy { ModConfig.SERVER.rarityThresholdsString.get().split(",").map { it.toInt() } }
-    val currencyHandler by lazy { DenominatedCurrenciesHandler() }
+    val currencyHandler get() = DenominatedCurrenciesHandler.instance
     val generator by lazy { AbyssalContractGenerator(this) }
 
     override fun save(compoundTag: CompoundTag, provider: HolderLookup.Provider): CompoundTag {

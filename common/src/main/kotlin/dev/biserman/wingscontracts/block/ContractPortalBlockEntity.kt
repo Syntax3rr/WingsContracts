@@ -12,7 +12,7 @@ import dev.biserman.wingscontracts.core.ServerContract
 import dev.biserman.wingscontracts.core.BoundContract
 import dev.biserman.wingscontracts.core.Contract
 import dev.biserman.wingscontracts.core.PortalLinker
-import dev.biserman.wingscontracts.data.ContractSavedData
+import dev.biserman.wingscontracts.config.DenominatedCurrenciesHandler
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
@@ -453,7 +453,7 @@ class ContractPortalBlockEntity(
 
     fun normalizeCurrencyInput(contract: Contract) {
         val anchor = contract.currencyAnchor ?: return
-        val denominations = ContractSavedData.fakeData.currencyHandler.itemToCurrencyMap[anchor] ?: return
+        val denominations = DenominatedCurrenciesHandler.instance.itemToCurrencyMap[anchor] ?: return
         val anchorValue = denominations[anchor]?.toLong() ?: return
         if (anchorValue <= 0) return
 
