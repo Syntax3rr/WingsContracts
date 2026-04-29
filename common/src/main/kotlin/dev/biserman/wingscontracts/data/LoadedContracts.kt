@@ -19,7 +19,7 @@ object LoadedContracts {
 
     operator fun get(contractTag: ContractTag): Contract? {
         val id = contractTag.id ?: return null
-        contracts[id]?.let { return it }
+        if (contracts.containsKey(id)) return contracts[id]
 
         val contract = (contractTag.type ?: return null).load(contractTag, null)
         contracts[id] = contract

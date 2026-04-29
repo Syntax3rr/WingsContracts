@@ -96,8 +96,4 @@ class DenominatedCurrenciesHandler() {
             DenominationsHelper.denominate(stackValue, denominations).asSequence()
                 .map { ItemStack(it.first, it.second) })
     }
-
-    companion object {
-        val instance by lazy { DenominatedCurrenciesHandler() }
-    }
 }

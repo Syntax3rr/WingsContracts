@@ -5,7 +5,6 @@ import dev.biserman.wingscontracts.block.ContractPortalBlock
 import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
 import dev.biserman.wingscontracts.block.state.properties.ContractPortalMode
 import dev.biserman.wingscontracts.compat.computercraft.DetailsHelper.details
-import dev.biserman.wingscontracts.config.DenominatedCurrenciesHandler
 import dev.biserman.wingscontracts.config.ModConfig
 import dev.biserman.wingscontracts.data.ContractDataReloadListener
 import dev.biserman.wingscontracts.data.ContractSavedData
@@ -132,6 +131,13 @@ class BoundContract(
             components.add(Component.translatable(description).withStyle(ChatFormatting.GRAY))
         }
 
+        if (maxLifetimeUnits > 0) {
+            val remaining = (maxLifetimeUnits.toLong() - unitsFulfilledEver).coerceAtLeast(0L)
+            val line = if (remaining == 1L) translateContract("uses_remaining_one")
+            else translateContract("uses_remaining", remaining)
+            components.add(line.withStyle(ChatFormatting.LIGHT_PURPLE))
+        }
+
         return components
     }
 
@@ -183,7 +189,7 @@ class BoundContract(
     fun burnSomeItems(contract: Contract, items: MutableList<ItemStack>, level: Level) {
         val lossRate = ModConfig.SERVER.boundContractLossRate.get()
         val anchor = contract.currencyAnchor
-        val denominations = anchor?.let { DenominatedCurrenciesHandler.instance.itemToCurrencyMap[it] }
+        val denominations = anchor?.let { ContractSavedData.fakeData.currencyHandler.itemToCurrencyMap[it] }
 
         if (denominations != null) {
             val totalValue = items.sumOf { (denominations[it.item] ?: 0.0) * it.count }
@@ -311,7 +317,7 @@ class BoundContract(
         /** If every item is part of the same currency group, find the smallest item in the list to anchor the price.*/
         private fun deriveCurrencyAnchor(targetItems: List<Item>): Item? {
             if (targetItems.isEmpty()) return null
-            val handler = DenominatedCurrenciesHandler.instance
+            val handler = ContractSavedData.fakeData.currencyHandler
             val groups = targetItems.map { handler.itemToCurrencyMap[it] }
             val firstGroup = groups.firstOrNull() ?: return null
             if (groups.any { it !== firstGroup }) return null

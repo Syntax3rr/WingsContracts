@@ -32,6 +32,8 @@
     "wingscontracts.contract.items_of_tag_short": "#%s",
     "wingscontracts.contract.matches_following": "of the following:",
     "wingscontracts.contract.units_fulfilled": "Units Fulfilled: %d/%d (%d/%d)",
+    "wingscontracts.contract.uses_remaining": "%d uses remaining",
+    "wingscontracts.contract.uses_remaining_one": "1 use remaining",
     "wingscontracts.contract.cycle_complete": "Cycle Complete!",
     "wingscontracts.contract.cycle_remaining": "Remaining Time until renewal:",
     "wingscontracts.contract.cycle_remaining_level_up": "Complete! Remaining Time until renewal & level up:",

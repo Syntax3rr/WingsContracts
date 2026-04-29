@@ -2,7 +2,7 @@ package dev.biserman.wingscontracts.core
 
 import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.block.ContractPortalBlockEntity
-import dev.biserman.wingscontracts.config.DenominatedCurrenciesHandler
+import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.data.LoadedContracts
 import dev.biserman.wingscontracts.nbt.ContractTag
 import dev.biserman.wingscontracts.nbt.ContractTagHelper
@@ -64,6 +64,7 @@ abstract class Contract(
     var isActive: Boolean = true,
     val maxLifetimeUnits: Int = 0,
 
+    // base denomination item identifying currency group and granularity. e.g., cogs
     val currencyAnchor: Item? = null,
 ) {
     abstract val type: ContractType
@@ -110,7 +111,7 @@ abstract class Contract(
 
     private fun denominationMap(): Map<Item, Double>? {
         val anchor = currencyAnchor ?: return null
-        return DenominatedCurrenciesHandler.instance.itemToCurrencyMap[anchor]
+        return ContractSavedData.fakeData.currencyHandler.itemToCurrencyMap[anchor]
     }
 
     open val isDisabled get() = !isActive

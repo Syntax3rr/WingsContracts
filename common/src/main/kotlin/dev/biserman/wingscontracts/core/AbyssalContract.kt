@@ -182,6 +182,13 @@ class AbyssalContract(
             ).withStyle(ChatFormatting.LIGHT_PURPLE)
         )
 
+        if (maxLifetimeUnits > 0) {
+            val remaining = (maxLifetimeUnits.toLong() - unitsFulfilledEver).coerceAtLeast(0L)
+            val line = if (remaining == 1L) translateContract("uses_remaining_one")
+            else translateContract("uses_remaining", remaining)
+            components.add(line.withStyle(ChatFormatting.LIGHT_PURPLE))
+        }
+
         return super.getBasicInfo(components)
     }
 

@@ -86,5 +86,12 @@ class ContractItem(properties: Properties) : Item(properties) {
         return ceil(filled * 13.0f / total).toInt()
     }
 
-    override fun getBarColor(itemStack: ItemStack): Int = 0xff55ff
+    override fun getBarColor(itemStack: ItemStack): Int {
+        val contract = LoadedContracts[itemStack]
+        if (contract != null && contract.maxLifetimeUnits > 0 &&
+            (contract !is ServerContract || contract.willCapBeforeLevelUp)) {
+            return 0x800020
+        }
+        return 0xff55ff
+    }
 }
