@@ -198,6 +198,15 @@ class CelestialContract(
                     reward.formatReward(unitsDemanded * reward.rewardPerUnit),
                 ).withStyle(ChatFormatting.AQUA)
             )
+
+            if (maxLevel != 1) {
+                components.add(
+                    translateContract(
+                        "celestial.max_level",
+                        if (maxLevel <= 0) "∞" else maxLevel.toString(),
+                    ).withStyle(ChatFormatting.AQUA)
+                )
+            }
         }
 
         val hasFiniteExpiry = cycleDurationMs > 0 && expiresIn > 0
@@ -236,13 +245,8 @@ class CelestialContract(
         if (maxLifetimeUnits <= 0) "∞" else maxLifetimeUnits.toString(),
     ).withStyle(ChatFormatting.GOLD)
 
-    override fun calculateRarity(data: ContractSavedData, rewardUnitValue: Double): Int {
-        // Rarity tracks total committed payout. Unlimited contracts use a sentinel cap to keep the math finite.
-        val cap = ModConfig.SERVER.celestialUnlimitedLifetimeUnitsRarityCap.get()
-        val effectiveLifetimeUnits = if (maxLifetimeUnits <= 0) cap else maxLifetimeUnits
-        val totalValue = effectiveLifetimeUnits.toDouble() * reward.rewardPerUnit * rewardUnitValue
-        return data.rarityThresholds.indexOfLast { totalValue > it } + 1
-    }
+    override fun calculateRarity(data: ContractSavedData, rewardUnitValue: Double): Int =
+        rarityFromCost(countPerUnit, maxLifetimeUnits, data)
 
     override fun addToGoggleTooltip(
         portal: ContractPortalBlockEntity,
@@ -314,6 +318,13 @@ class CelestialContract(
         const val FALLBACK_QUANTITY_GROWTH_FACTOR: Double = 1.0
         const val FALLBACK_EXPIRES_IN: Int = -1
         const val FALLBACK_AUTHOR: String = "${WingsContractsMod.MOD_ID}.default_celestial_author"
+
+        fun rarityFromCost(countPerUnit: Int, maxLifetimeUnits: Int, data: ContractSavedData): Int {
+            val cap = ModConfig.SERVER.celestialUnlimitedLifetimeUnitsRarityCap.get()
+            val effectiveLifetimeUnits = if (maxLifetimeUnits <= 0) cap else maxLifetimeUnits
+            val totalCost = countPerUnit.toDouble() * effectiveLifetimeUnits
+            return data.celestialRarityThresholds.indexOfLast { totalCost > it } + 1
+        }
 
         fun maxAchievableLifetimeUnits(
             cycleDurationMs: Long,

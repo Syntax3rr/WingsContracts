@@ -25,7 +25,12 @@ class ContractSavedData : SavedData() {
     var currentCycleStart: Long = 0
     val nextCycleStart get() = currentCycleStart + ModConfig.SERVER.abyssalContractsPoolRefreshPeriodMs.get()
 
-    val rarityThresholds by lazy { ModConfig.SERVER.rarityThresholdsString.get().split(",").map { it.toInt() } }
+    val rarityThresholds by lazy { parseThresholds(ModConfig.SERVER.rarityThresholdsString.get()) }
+    val celestialRarityThresholds by lazy { parseThresholds(ModConfig.SERVER.celestialRarityThresholdsString.get()) }
+
+    private fun parseThresholds(raw: String): List<Int> =
+        raw.split(",").mapNotNull { it.trim().takeIf(String::isNotEmpty)?.toIntOrNull() }
+
     val currencyHandler = DenominatedCurrenciesHandler()
     val generator by lazy { AbyssalContractGenerator(this) }
     val celestialGenerator by lazy { CelestialContractGenerator(this) }

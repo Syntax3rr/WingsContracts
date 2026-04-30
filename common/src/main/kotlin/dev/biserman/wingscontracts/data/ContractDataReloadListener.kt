@@ -88,6 +88,9 @@ object ContractDataReloadListener : SimpleJsonResourceReloadListener(GSON, "wing
         }
     }
 
+    fun getCelestialRewardPoolEntryByName(targetName: String): CelestialRewardPoolEntry? =
+        data.availableCelestialRewardPool.firstOrNull { it.name == targetName }
+
     var jsonBlobs = mutableMapOf<ResourceLocation, JsonElement>()
 
     override fun apply(

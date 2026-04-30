@@ -5,6 +5,7 @@ import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.client.ponder.scenes.*
 import dev.biserman.wingscontracts.command.LoadContractCommand
 import dev.biserman.wingscontracts.registry.ModBlockRegistry
+import dev.biserman.wingscontracts.registry.ModItemRegistry
 import net.createmod.ponder.api.registration.PonderPlugin
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper
@@ -36,6 +37,20 @@ object ModPonderPlugin : PonderPlugin {
         "bound"
     ).createItem()
 
+    fun getExampleCelestialContract(level: Level) = LoadContractCommand.loadContract(
+        "{\"targetItems\":\"minecraft:emerald\"," +
+            "\"countPerUnit\": 8," +
+            "\"reward\":{\"Count\": 1,\"id\":\"minecraft:diamond\"}," +
+            "\"maxLevel\": 3," +
+            "\"maxLifetimeUnits\": 10," +
+            "\"baseUnitsDemanded\": 4," +
+            "\"cycleDurationMs\": 0," +
+            "\"expiresIn\": -1," +
+            "\"rarity\": 2}",
+        level,
+        "celestial"
+    ).createItem()
+
     override fun getModId() = WingsContractsMod.MOD_ID
 
     override fun registerScenes(helper: PonderSceneRegistrationHelper<ResourceLocation>) {
@@ -45,6 +60,7 @@ object ModPonderPlugin : PonderPlugin {
         RedstoneOutputScene.register(helper)
         BoundContractScene.register(helper)
         SpigotScene.register(helper)
+        CelestialContractScene.register(helper)
     }
 
     override fun registerTags(helper: PonderTagRegistrationHelper<ResourceLocation>) {
@@ -57,6 +73,7 @@ object ModPonderPlugin : PonderPlugin {
         helper.addToTag(CONTRACT_CATEGORY)
             .add(ModBlockRegistry.CONTRACT_SPIGOT.id)
             .add(ModBlockRegistry.CONTRACT_PORTAL.id)
+            .add(ModItemRegistry.CELESTIAL_CONTRACT.id)
 
         helper.addToTag(AllCreatePonderTags.DISPLAY_SOURCES)
             .add(ModBlockRegistry.CONTRACT_PORTAL.id)

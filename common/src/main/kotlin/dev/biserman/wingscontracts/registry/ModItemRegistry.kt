@@ -39,10 +39,10 @@ object ModItemRegistry {
     ) { ContractItem(Item.Properties().stacksTo(1)) }
     val BLANK_CELESTIAL_CONTRACT: RegistrySupplier<Item> = ITEMS.register(
         "blank_celestial_contract"
-    ) { BlankCelestialContractItem(Item.Properties().stacksTo(1)) }
+    ) { BlankCelestialContractItem(Item.Properties().stacksTo(1).fireResistant()) }
     val CELESTIAL_CONTRACT: RegistrySupplier<Item> = ITEMS.register(
         "celestial_contract"
-    ) { ContractItem(Item.Properties().stacksTo(1)) }
+    ) { ContractItem(Item.Properties().stacksTo(1).fireResistant()) }
 
 
     val ABYSSAL_COIN: RegistrySupplier<Item> = ITEMS.register(

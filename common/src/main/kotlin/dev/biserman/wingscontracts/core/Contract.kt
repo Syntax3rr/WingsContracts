@@ -501,6 +501,8 @@ abstract class Contract(
         var (ContractTag).countPerUnit by int()
         var (ContractTag).unitsFulfilledEver by long()
         var (ContractTag).rarity by int()
+        var (ContractTag).rerollCount by int()
+        var (ContractTag).relaxCount by int()
 
         var (ContractTag).author by string()
         var (ContractTag).name by string()

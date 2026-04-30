@@ -32,6 +32,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 
@@ -60,16 +61,30 @@ class CelestialContractGenerator(val data: ContractSavedData) {
     }
 
     private fun generateContract(entry: CelestialRewardPoolEntry): CelestialContract? {
+        val bias = ModConfig.SERVER.celestialRarityBias.get().coerceIn(-1.0, 1.0)
+        val tournamentSize = (1.0 + abs(bias) * MAX_BIAS_TOURNAMENT_BONUS).toInt().coerceAtLeast(1)
+
+        val candidates = (1..tournamentSize).mapNotNull { rollWithRetries(entry) }
+        if (candidates.isEmpty()) {
+            // Cheapest shape as a last resort so generation always terminates.
+            return rollAndPrice(entry, forceCheapShape = true) ?: run {
+                WingsContractsMod.LOGGER.warn(
+                    "Celestial generator could not satisfy slot-fit even with cheapest shape; entry value=${entry.value}"
+                )
+                null
+            }
+        }
+
+        if (candidates.size == 1 || bias == 0.0) return candidates.first()
+        return if (bias > 0) candidates.maxBy { it.calculateRarity(data, entry.value) }
+        else candidates.minBy { it.calculateRarity(data, entry.value) }
+    }
+
+    private fun rollWithRetries(entry: CelestialRewardPoolEntry): CelestialContract? {
         repeat(REROLL_ATTEMPTS) {
             rollAndPrice(entry)?.let { return it }
         }
-        // Final fallback: cheapest possible shape so generation always terminates.
-        return rollAndPrice(entry, forceCheapShape = true) ?: run {
-            WingsContractsMod.LOGGER.warn(
-                "Celestial generator could not satisfy slot-fit even with cheapest shape; entry value=${entry.value}"
-            )
-            null
-        }
+        return null
     }
 
     private fun rollAndPrice(entry: CelestialRewardPoolEntry, forceCheapShape: Boolean = false): CelestialContract? {
@@ -88,10 +103,10 @@ class CelestialContractGenerator(val data: ContractSavedData) {
             maxLifetimeUnits = CelestialContract.clampMaxLifetimeUnits(rawShape.maxLifetimeUnits, achievable)
         )
 
-        val multiplier = computeCostMultiplier(shape)
+        val premium = computePerUnitPremium(shape)
 
         val rawCost = ceil(
-            entry.value * multiplier * ModConfig.SERVER.celestialBaseCostMultiplier.get() * varyOptional()
+            entry.value * premium * ModConfig.SERVER.celestialBaseCostMultiplier.get() * varyOptional()
         ).toInt().coerceAtLeast(1)
 
         val demand = pickDemand(rawCost) ?: return null
@@ -129,15 +144,6 @@ class CelestialContractGenerator(val data: ContractSavedData) {
         return CelestialContract.load(tag, data)
     }
 
-    private data class Shape(
-        val baseUnitsDemanded: Int,
-        val maxLifetimeUnits: Int,
-        val maxLevel: Int,
-        val quantityGrowthFactor: Double,
-        val cycleDurationMs: Long,
-        val expiresIn: Int,
-    )
-
     private val CHEAP_SHAPE = Shape(
         baseUnitsDemanded = 1,
         maxLifetimeUnits = 1,
@@ -152,7 +158,7 @@ class CelestialContractGenerator(val data: ContractSavedData) {
 
         val baseUnitsLo = constraints?.baseUnitsDemandedMin ?: cfg.celestialRandomBaseUnitsDemandedMin.get()
         val baseUnitsHi = constraints?.baseUnitsDemandedMax ?: cfg.celestialRandomBaseUnitsDemandedMax.get()
-        val baseUnitsDemanded = randomInt(baseUnitsLo, baseUnitsHi).coerceAtLeast(1)
+        val baseUnitsDemanded = randomIntInclusive(baseUnitsLo, baseUnitsHi).coerceAtLeast(1)
 
         val unlimitedChance =
             constraints?.unlimitedLifetimeUnitsChance ?: cfg.celestialRandomUnlimitedLifetimeUnitsChance.get()
@@ -161,12 +167,12 @@ class CelestialContractGenerator(val data: ContractSavedData) {
         } else {
             val lo = constraints?.maxLifetimeUnitsMin ?: cfg.celestialRandomMaxLifetimeUnitsMin.get()
             val hi = constraints?.maxLifetimeUnitsMax ?: cfg.celestialRandomMaxLifetimeUnitsMax.get()
-            randomInt(lo, hi)
+            randomIntInclusive(lo, hi)
         }
 
         val levelLo = constraints?.maxLevelMin ?: cfg.celestialRandomMaxLevelMin.get()
         val levelHi = constraints?.maxLevelMax ?: cfg.celestialRandomMaxLevelMax.get()
-        val maxLevel = randomInt(levelLo, levelHi)
+        val maxLevel = randomIntInclusive(levelLo, levelHi)
         val growthFactor = when {
             constraints?.quantityGrowthFactor != null -> constraints.quantityGrowthFactor
             maxLevel <= 1 -> 1.0
@@ -185,7 +191,7 @@ class CelestialContractGenerator(val data: ContractSavedData) {
             else {
                 val lo = constraints?.expiresInMin ?: cfg.celestialRandomExpiresInMin.get()
                 val hi = constraints?.expiresInMax ?: cfg.celestialRandomExpiresInMax.get()
-                randomInt(lo, hi)
+                randomIntInclusive(lo, hi)
             }
         } else -1
 
@@ -231,38 +237,7 @@ class CelestialContractGenerator(val data: ContractSavedData) {
         return options.last()
     }
 
-    private fun computeCostMultiplier(shape: Shape): Double {
-        val cfg = ModConfig.SERVER
-
-        val isCycled = shape.cycleDurationMs > 0L
-        val hasFiniteExpiry = isCycled && shape.expiresIn > 0
-
-        var m = 1.0
-        // Skip the per-lifetime-unit factor when finite expiry already prices multi-fulfilment, to avoid double-charging.
-        if (!hasFiniteExpiry) {
-            m *= 1.0 + cfg.celestialCostPerExtraLifetimeUnitFactor.get() * max(0, shape.maxLifetimeUnits - 1)
-        }
-        m *= 1.0 + cfg.celestialCostPerExtraLevelFactor.get() * max(0, shape.maxLevel - 1)
-        m *= cycleDurationCostFactor(shape.cycleDurationMs)
-        if (hasFiniteExpiry) {
-            m *= 1.0 + cfg.celestialCostPerExtraExpiryFactor.get() * shape.expiresIn
-        }
-
-        if (shape.maxLifetimeUnits == 0) m *= cfg.celestialUnlimitedLifetimeUnitsMultiplier.get()
-        if (shape.expiresIn == -1 && isCycled) m *= cfg.celestialNeverExpiresMultiplier.get()
-
-        return m
-    }
-
-    private fun cycleDurationCostFactor(cycleDurationMs: Long): Double {
-        val options = ModConfig.SERVER.celestialRandomCycleDurationOptionsMs.get().split(",")
-            .mapNotNull { it.trim().toLongOrNull() }
-        val factors = ModConfig.SERVER.celestialCycleDurationCostFactors.get().split(",")
-            .mapNotNull { it.trim().toDoubleOrNull() }
-        if (options.size != factors.size || options.isEmpty()) return 1.0
-        val idx = options.indexOf(cycleDurationMs)
-        return if (idx >= 0) factors[idx] else 1.0
-    }
+    private fun computePerUnitPremium(shape: Shape): Double = CelestialPricing.premium(shape)
 
     private fun varyOptional(): Double {
         val variance = ModConfig.SERVER.celestialVariance.get()
@@ -359,13 +334,9 @@ class CelestialContractGenerator(val data: ContractSavedData) {
         return total
     }
 
-    private fun randomInt(lo: Int, hi: Int): Int {
-        if (hi <= lo) return lo
-        return lo + random.nextInt(hi - lo + 1)
-    }
-
     companion object {
         private const val REROLL_ATTEMPTS = 5
         private const val SWAP_ATTEMPTS = 5
+        private const val MAX_BIAS_TOURNAMENT_BONUS = 5
     }
 }

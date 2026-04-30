@@ -65,6 +65,7 @@
 
     "wingscontracts.contract.celestial.rewards": "Receive %s for every %d",
     "wingscontracts.contract.celestial.max_reward_cycle": "Max Reward this Cycle: %s",
+    "wingscontracts.contract.celestial.max_level": "Max Level: %s",
     "wingscontracts.contract.celestial.uses_remaining": "%d uses remaining",
     "wingscontracts.contract.celestial.uses_remaining_one": "1 use remaining",
     "wingscontracts.contract.celestial.uses_unlimited": "Unlimited uses",
@@ -138,6 +139,11 @@
     "commands.wingscontracts.failed.not_in_hand": "Error: no contract in hand.",
     "commands.wingscontracts.failed.unavailable_page": "Error: page %d does not exist. Last page is %d.",
     "commands.wingscontracts.argument.contract_type.invalid": "Unknown contract type",
+    "commands.wingscontracts.reroll.success": "Rerolled %s's contract: %s %s.",
+    "commands.wingscontracts.reroll.not_celestial": "Error: held item is not a celestial contract.",
+    "commands.wingscontracts.reroll.already_used": "Error: contract has already been used.",
+    "commands.wingscontracts.reroll.max_rerolls_reached": "Error: contract has reached its reroll limit.",
+    "commands.wingscontracts.reroll.no_applicable_stat": "Error: no contract stat could be rerolled in that direction.",
 
 
     "item.wingscontracts.contract": "%s Contract",
@@ -219,6 +225,11 @@
     "wingscontracts.ponder.contract_spigot.intro.header": "Contract Spigots",
     "wingscontracts.ponder.contract_spigot.intro.text_1": "The Contract Spigot is a decorative block that spits out the items used to fulfill Abyssal Contracts.",
     "wingscontracts.ponder.contract_spigot.intro.text_2": "Items spit by the spigot are purely cosmetic and cannot be picked up.",
+    "wingscontracts.ponder.celestial_contract.intro.header": "Rerolling Celestial Contracts",
+    "wingscontracts.ponder.celestial_contract.intro.text_1": "An unused Celestial Contract can be rerolled to better fit your needs. Each reroll changes one stat and adjusts the price.",
+    "wingscontracts.ponder.celestial_contract.intro.text_2": "Strike it with lightning to relax the contract. One restriction is reduced and the price rises to match.",
+    "wingscontracts.ponder.celestial_contract.intro.text_3": "Drop it in fire or lava to restrict the contract. One of those stats tightens, and the price drops.",
+    "wingscontracts.ponder.celestial_contract.intro.text_4": "Both only work on a fresh contract. Once any units are turned in, the contract is locked and can't be rerolled.",
     "wingscontracts.ponder.tag.contracts": "Contracts",
     "wingscontracts.ponder.tag.contracts.description": "Items and Components related to contracts",
 

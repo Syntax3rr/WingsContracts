@@ -31,6 +31,7 @@ object WingsContractsMod {
         ModSoundRegistry.register()
         ModLootEntryRegistry.register()
         ModCommandRegistry.register()
+        ModRecipeRegistry.register()
         ModMenuRegistry.register()
         ModReloadListenerRegistry.register()
         ModCriteriaTriggerRegistry.register()

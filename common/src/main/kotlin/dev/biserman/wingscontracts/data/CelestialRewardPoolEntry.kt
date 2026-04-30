@@ -101,6 +101,7 @@ class ShapeConstraints(
     val expiresInMin: Int? = null,
     val expiresInMax: Int? = null,
     val neverExpiresChance: Double? = null,
+    val maxRerolls: Int? = null,
 ) {
     companion object {
         fun fromJson(json: JsonObject): ShapeConstraints {
@@ -130,6 +131,7 @@ class ShapeConstraints(
                 expiresInMin = int("expiresInMin"),
                 expiresInMax = int("expiresInMax"),
                 neverExpiresChance = dbl("neverExpiresChance"),
+                maxRerolls = int("maxRerolls"),
             )
         }
     }

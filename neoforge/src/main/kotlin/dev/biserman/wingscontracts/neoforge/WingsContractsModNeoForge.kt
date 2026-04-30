@@ -43,6 +43,8 @@ class WingsContractsModNeoForge(bus: IEventBus, container: ModContainer) {
             event.rareTrades.add(CelestialWanderingTradeListing())
         }
 
+        CelestialRerollEvents.register(NeoForge.EVENT_BUS)
+
         WingsContractsMod.init()
         ForgeModCompat.init(bus)
     }
