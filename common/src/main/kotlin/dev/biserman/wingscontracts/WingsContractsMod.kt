@@ -29,7 +29,9 @@ object WingsContractsMod {
         ModBlockEntityRegistry.register()
         ModEntityRegistry.register()
         ModSoundRegistry.register()
+        ModLootEntryRegistry.register()
         ModCommandRegistry.register()
+        ModRecipeRegistry.register()
         ModMenuRegistry.register()
         ModReloadListenerRegistry.register()
         ModCriteriaTriggerRegistry.register()
@@ -42,6 +44,7 @@ object WingsContractsMod {
         LifecycleEvent.SERVER_LEVEL_LOAD.register { level -> ContractTagHelper.registryAccess = level.registryAccess() }
 
         TickEvent.Server.SERVER_LEVEL_POST.register { level ->
+            ContractTagHelper.registryAccess = level.registryAccess()
             ContractSavedData.get(level).serverTick(level)
         }
 

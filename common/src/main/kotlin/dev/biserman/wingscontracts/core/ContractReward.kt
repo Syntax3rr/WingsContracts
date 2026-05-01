@@ -102,8 +102,11 @@ sealed class ContractReward {
         override val isValid get() = commands.isNotEmpty()
         override fun toTagReward(): Reward = Reward.Commands(commands, label, value)
 
-        override fun formatReward(count: Int): String =
-            if (count <= 1) label else "$label ×$count"
+        override fun formatReward(count: Int): String {
+            // Label is a translation key, falling back to the literal string if not registered.
+            val translated = Component.translatable(label).string
+            return if (count <= 1) translated else "$translated ×$count"
+        }
 
         override fun apply(units: Int, ctx: RewardContext): RewardOutcome {
             val source = CommandSourceStack(

@@ -466,10 +466,7 @@ class ContractPortalBlockEntity(
             .sumOf { denominations[it.item]!!.toLong() * it.count }
         if (currencyValue <= 0) return
 
-        // Normalize to the anchor; any sub-anchor remainder spills into smaller denominations.
-        val normalizationDenoms = denominations
-            .filterValues { it.toLong() <= anchorValue }
-            .mapValues { it.value.toLong() }
+        val normalizationDenoms = denominations.mapValues { it.value.toLong() }
         val targetStacks = DenominationsHelper.denominate(currencyValue, normalizationDenoms)
             .asSequence()
             .flatMap { (item, count) ->

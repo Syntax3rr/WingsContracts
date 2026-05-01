@@ -44,6 +44,7 @@ class ContractItemDecorator : IItemDecorator {
         fun registerItemDecorations(event: RegisterItemDecorationsEvent) {
             val abyssalContract = ModItemRegistry.ABYSSAL_CONTRACT.get()
             val boundContract = ModItemRegistry.BOUND_CONTRACT.get()
+            val celestialContract = ModItemRegistry.CELESTIAL_CONTRACT.get()
 
             if (abyssalContract == null) {
                 WingsContractsMod.LOGGER.error("Unable to register item decorations: abyssalContract could not be found.")
@@ -53,8 +54,13 @@ class ContractItemDecorator : IItemDecorator {
                 WingsContractsMod.LOGGER.error("Unable to register item decorations: boundContract could not be found.")
             }
 
+            if (celestialContract == null) {
+                WingsContractsMod.LOGGER.error("Unable to register item decorations: celestialContract could not be found.")
+            }
+
             event.register(abyssalContract, instance)
             event.register(boundContract, instance)
+            event.register(celestialContract, instance)
         }
     }
 }

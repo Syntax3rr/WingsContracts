@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:glowstone"
+    },
+    "S": {
+      "item": "minecraft:nether_star"
+    }
+  },
+  "pattern": [
+    "G",
+    "S",
+    "G"
+  ],
+  "result": {
+    "id": "wingscontracts:blank_celestial_contract",
+    "count": 1
+  },
+  "show_notification": true
+}

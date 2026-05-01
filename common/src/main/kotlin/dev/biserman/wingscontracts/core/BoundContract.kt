@@ -314,7 +314,6 @@ class BoundContract(
         var (ContractTag).otherSideCountPerUnit by int()
         var (ContractTag).otherSideTargets by csv()
 
-        /** If every item is part of the same currency group, find the smallest item in the list to anchor the price.*/
         private fun deriveCurrencyAnchor(targetItems: List<Item>): Item? {
             if (targetItems.isEmpty()) return null
             val handler = ContractSavedData.fakeData.currencyHandler
