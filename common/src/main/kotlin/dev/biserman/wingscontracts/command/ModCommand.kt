@@ -18,6 +18,8 @@ object ModCommand {
             .then(RandomContractCommand.register())
             .then(CopyContractCommand.register())
             .then(PoolCommand.register())
+            .then(CelestialContractCommand.register())
+            .then(RerollContractCommand.register())
 
     fun giveContract(sourceStack: CommandSourceStack, contract: Contract?, player: ServerPlayer?): Int {
         if (contract == null) {

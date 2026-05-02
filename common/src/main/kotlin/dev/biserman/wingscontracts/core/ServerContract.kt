@@ -5,6 +5,7 @@ import dev.biserman.wingscontracts.config.DecayFunctionOptions
 import dev.biserman.wingscontracts.config.GrowthFunctionOptions
 import dev.biserman.wingscontracts.data.ContractSavedData
 import dev.biserman.wingscontracts.nbt.ContractTag
+import dev.biserman.wingscontracts.nbt.ContractTagHelper
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.boolean
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.double
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.enum
@@ -12,6 +13,7 @@ import dev.biserman.wingscontracts.nbt.ContractTagHelper.int
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.long
 import dev.biserman.wingscontracts.nbt.ContractTagHelper.reward
 import dev.biserman.wingscontracts.nbt.ItemCondition
+import dev.biserman.wingscontracts.nbt.Reward
 import dev.biserman.wingscontracts.util.DenominationsHelper
 import net.minecraft.ChatFormatting
 import net.minecraft.core.NonNullList
@@ -127,16 +129,7 @@ abstract class ServerContract(
         if (countPerUnit == 0) {
             return 0
         }
-
-        return when (val fn = growthFunction) {
-            GrowthFunctionOptions.LINEAR -> {
-                val growth = (baseUnitsDemanded * (level - 1) * (quantityGrowthFactor - 1)).toInt()
-                baseUnitsDemanded + growth
-            }
-
-            GrowthFunctionOptions.EXPONENTIAL -> (baseUnitsDemanded * quantityGrowthFactor.pow(level - 1)).toInt()
-            else -> throw Error("Unrecognized contract growth function: $fn")
-        }
+        return unitsAt(level, baseUnitsDemanded, quantityGrowthFactor, growthFunction)
     }
 
     val cyclesPassed get() = ((System.currentTimeMillis() - currentCycleStart) / cycleDurationMs).toInt()
@@ -162,7 +155,8 @@ abstract class ServerContract(
                 && (targetItems.any { it != Items.AIR }
                 || targetTags.any()
                 || targetBlockTags.any()
-                || targetConditions.any())
+                || targetConditions.any()
+                || currencyAnchor != null)
 
     override fun countConsumableUnits(items: NonNullList<ItemStack>): Int =
         min(super.countConsumableUnits(items), unitsDemanded - unitsFulfilled)
@@ -181,8 +175,8 @@ abstract class ServerContract(
                 return false
             }
             onContractFulfilled(tag)
-            isActive = false
-            tag.isActive = isActive
+            unitsFulfilled = 0
+            tag.unitsFulfilled = unitsFulfilled
             return true
         }
 
@@ -289,7 +283,13 @@ abstract class ServerContract(
             executor = serverLevel.getPlayerByUUID(portal.lastPlayer) as? ServerPlayer,
             pos = Vec3.atBottomCenterOf(portal.blockPos),
         )
-        val outcome = reward.apply(unitCount, ctx)
+        ContractTagHelper.registryAccess = serverLevel.registryAccess()
+        val freshReward = when (val r = tag.reward) {
+            is Reward.Defined -> ContractReward.Items(r.itemStack)
+            is Reward.Commands -> ContractReward.Commands(r.commands, r.label, r.value)
+            else -> reward
+        }
+        val outcome = freshReward.apply(unitCount, ctx)
         return ConsumeResult(outcome.items, unitCount, outcome.scoreboardValue)
     }
 
@@ -303,14 +303,19 @@ abstract class ServerContract(
             return components
         }
 
+        // No cycle configured
+        if (cycleDurationMs <= 0) {
+            return components
+        }
+
         val start = if (isInitialized) currentCycleStart else System.currentTimeMillis()
         val nextCycleStart = start + cycleDurationMs
         val timeRemaining = nextCycleStart - System.currentTimeMillis()
         val timeRemainingString = DenominationsHelper.denominateDurationToString(timeRemaining)
-        val timeRemainingColor = getTimeRemainingColor(timeRemaining)
+        val timeRemainingColor = timeRemainingColor(timeRemaining)
 
         if (Date(nextCycleStart) <= Date()) {
-            components.add(translateContract("cycle_complete").withStyle(ChatFormatting.DARK_PURPLE))
+            components.add(translateContract("cycle_complete").withStyle(primaryStyle))
         } else {
             val cycleRemainingComponent =
                 if (isComplete) translateContract("cycle_remaining_level_up").withStyle(ChatFormatting.AQUA)
@@ -320,7 +325,7 @@ abstract class ServerContract(
         }
 
         if (expiresIn > 0) {
-            components.add(translateContract("expires_in", expiresIn).withStyle(ChatFormatting.DARK_PURPLE))
+            components.add(translateContract("expires_in", expiresIn).withStyle(primaryStyle))
         }
 
         if (decayEnabled && decayCyclesPerEvent > 0 && hasEffectiveDecay && !isComplete) {
@@ -346,6 +351,7 @@ abstract class ServerContract(
             DecayFunctionOptions.FIXED ->
                 if (decayLevelsPerEvent == 1) translateContract("decay_hit_level_one").string
                 else translateContract("decay_hit_levels", decayLevelsPerEvent).string
+
             DecayFunctionOptions.PERCENTAGE ->
                 translateContract("decay_hit_percent", (decayPercentPerEvent * 100).roundToInt()).string
         }
@@ -416,5 +422,14 @@ abstract class ServerContract(
         var (ContractTag).unitsFulfilled by int()
 
         var (ContractTag).isInitialized by boolean()
+
+        fun unitsAt(level: Int, base: Int, growth: Double, fn: GrowthFunctionOptions): Int = when (fn) {
+            GrowthFunctionOptions.LINEAR -> {
+                val growthAmount = (base * (level - 1) * (growth - 1)).toInt()
+                base + growthAmount
+            }
+
+            GrowthFunctionOptions.EXPONENTIAL -> (base * growth.pow(level - 1)).toInt()
+        }
     }
 }

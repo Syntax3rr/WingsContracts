@@ -125,7 +125,7 @@ abstract class Contract(
         }
     }
 
-    val displayItems by lazy {
+    open val displayItems by lazy {
         if (displayItem == null) {
             if (targetItems.isEmpty() && targetTags.isEmpty() && targetBlockTags.isEmpty()) {
                 listOf(ModItemRegistry.QUESTION_MARK.get()?.defaultInstance ?: ItemStack.EMPTY)
@@ -144,6 +144,10 @@ abstract class Contract(
         }
     }
 
+    open val portalDisplayItems: List<ItemStack> get() = displayItems
+
+    open val targetDisplayItem: ItemStack? get() = displayItem
+
     open val targetName: String by lazy {
         val targetComponentCount = targetItems.size + targetTags.size + targetBlockTags.size
         if (targetComponentCount > 1) {
@@ -151,8 +155,9 @@ abstract class Contract(
         }
 
         if (targetItems.isNotEmpty()) {
-            return@lazy if (displayItem != null) {
-                displayItem.displayName.string.trimBrackets()
+            val labelItem = targetDisplayItem
+            return@lazy if (labelItem != null) {
+                labelItem.displayName.string.trimBrackets()
             } else {
                 targetItems[0].name().trimBrackets()
             }
@@ -173,6 +178,9 @@ abstract class Contract(
                 .flatMap { it.split("_") }
                 .joinToString(" ") { it.replaceFirstChar { it.titlecase(Locale.getDefault()) } }
         }
+
+        // Currency-anchored with no other targets: surface the anchor item's name as the target.
+        currencyAnchor?.let { return@lazy it.name().trimBrackets() }
 
         return@lazy translateContract("empty").string
     }
@@ -201,13 +209,18 @@ abstract class Contract(
             }
         }
 
+        if (totalSize == 0 && currencyAnchor != null) {
+            return listOf(Component.literal(currencyAnchor.name().trimBrackets()))
+        }
+
         return when (totalSize) {
             0 -> listOf(translateContract("no_targets"))
             1 -> if (targetItems.isNotEmpty()) {
+                val labelItem = targetDisplayItem
                 listOf(
                     Component.literal(
-                        if (displayItem != null) {
-                            displayItem.displayName.string.trimBrackets()
+                        if (labelItem != null) {
+                            labelItem.displayName.string.trimBrackets()
                         } else {
                             targetItems[0].name().trimBrackets()
                         }
@@ -236,6 +249,12 @@ abstract class Contract(
             .plus(targetBlockTags.map { it.name() })
             .toList()
 
+    open val primaryStyle: ChatFormatting = ChatFormatting.DARK_PURPLE
+    open val accentStyle: ChatFormatting = ChatFormatting.LIGHT_PURPLE
+
+    fun timeRemainingColor(timeRemaining: Long): ChatFormatting =
+        getTimeRemainingColor(timeRemaining, primaryStyle)
+
     open fun getBasicInfo(list: MutableList<Component>?): MutableList<Component> = list ?: mutableListOf()
 
     open fun getShortInfo(): Component = Component.empty()
@@ -258,7 +277,7 @@ abstract class Contract(
                 unitsFulfilledEver,
                 unitsFulfilledEver * countPerUnit,
                 unitsFulfilledEver * rewardPerUnit
-            ).withStyle(ChatFormatting.LIGHT_PURPLE)
+            ).withStyle(accentStyle)
         )
 
         if (author.isNotBlank()) {
@@ -266,7 +285,7 @@ abstract class Contract(
                 translateContract(
                     "author",
                     Component.translatable(author).string
-                ).withStyle(ChatFormatting.DARK_PURPLE)
+                ).withStyle(primaryStyle)
             )
         }
 
@@ -376,7 +395,15 @@ abstract class Contract(
                 .minByOrNull { denominations[it.item]!! }
             if (breakable != null) {
                 val itemValue = denominations[breakable.item]!!.toLong()
-                out.add(breakable.split(1))
+                breakable.split(1)
+                for ((item, count) in DenominationsHelper.denominate(remaining.toDouble(), denominations)) {
+                    var leftover = count
+                    while (leftover > 0) {
+                        val take = min(leftover, item.defaultMaxStackSize)
+                        out.add(ItemStack(item, take))
+                        leftover -= take
+                    }
+                }
                 val change = itemValue - remaining
                 if (change > 0) {
                     for ((item, count) in DenominationsHelper.denominate(change.toDouble(), denominations)) {
@@ -474,6 +501,8 @@ abstract class Contract(
         var (ContractTag).countPerUnit by int()
         var (ContractTag).unitsFulfilledEver by long()
         var (ContractTag).rarity by int()
+        var (ContractTag).rerollCount by int()
+        var (ContractTag).relaxCount by int()
 
         var (ContractTag).author by string()
         var (ContractTag).name by string()
@@ -565,10 +594,23 @@ abstract class Contract(
             }
         }
 
-        fun getTimeRemainingColor(timeRemaining: Long) = when {
+        fun getPortalDisplayItem(itemStack: ItemStack, time: Float): ItemStack {
+            val contract = LoadedContracts[itemStack] ?: return ItemStack.EMPTY
+            val items = contract.portalDisplayItems
+            return if (items.isEmpty()) {
+                ItemStack.EMPTY
+            } else {
+                items[Mth.floor(time / 30.0f) % items.size]
+            }
+        }
+
+        fun getTimeRemainingColor(
+            timeRemaining: Long,
+            longTimeColor: ChatFormatting = ChatFormatting.DARK_PURPLE,
+        ) = when {
             timeRemaining < 1000 * 60 * 60 -> ChatFormatting.RED
             timeRemaining < 1000 * 60 * 60 * 24 -> ChatFormatting.YELLOW
-            else -> ChatFormatting.DARK_PURPLE
+            else -> longTimeColor
         }
     }
 }

@@ -5,7 +5,8 @@ import dev.biserman.wingscontracts.nbt.ContractTag
 
 enum class ContractType(val id: Int, val load: (ContractTag, ContractSavedData?) -> Contract) {
     ABYSSAL(1, AbyssalContract::load),
-    BOUND(2, BoundContract::load);
+    BOUND(2, BoundContract::load),
+    CELESTIAL(3, CelestialContract::load);
 
     companion object {
         private val BY_ID = entries.associateBy { it.id }

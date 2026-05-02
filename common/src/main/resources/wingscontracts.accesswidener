@@ -14,3 +14,6 @@ accessible field net/minecraft/world/item/component/CustomData tag Lnet/minecraf
 accessible field net/minecraft/world/item/enchantment/ItemEnchantments enchantments Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
 accessible field net/minecraft/world/scores/Scoreboard playerScores Ljava/util/Map;
 accessible field net/minecraft/world/scores/Score value I
+
+# Loot-table injection for Celestial Contracts.
+accessible method net/minecraft/world/level/storage/loot/entries/LootPoolSingletonContainer singletonFields (Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/Products$P4;

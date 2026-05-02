@@ -1,0 +1,33 @@
+{
+  "parent": "wingscontracts:main/root",
+  "criteria": {
+    "celestial": {
+      "conditions": {
+        "item_matches": "id==wingscontracts:celestial_contract"
+      },
+      "trigger": "wingscontracts:contract_complete"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancement.wingscontracts.celestial.desc"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "wingscontracts:celestial_contract",
+      "count": 1
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancement.wingscontracts.celestial"
+    }
+  },
+  "requirements": [
+    [
+      "celestial"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

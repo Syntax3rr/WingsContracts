@@ -8,6 +8,7 @@ import dev.architectury.registry.registries.RegistrySupplier
 import dev.biserman.wingscontracts.WingsContractsMod
 import dev.biserman.wingscontracts.item.BlankAbyssalContractItem
 import dev.biserman.wingscontracts.item.BlankBoundContractItem
+import dev.biserman.wingscontracts.item.BlankCelestialContractItem
 import dev.biserman.wingscontracts.item.ContractItem
 import net.minecraft.core.registries.Registries
 import net.minecraft.resources.ResourceKey
@@ -36,6 +37,12 @@ object ModItemRegistry {
     val BOUND_CONTRACT: RegistrySupplier<Item> = ITEMS.register(
         "bound_contract"
     ) { ContractItem(Item.Properties().stacksTo(1)) }
+    val BLANK_CELESTIAL_CONTRACT: RegistrySupplier<Item> = ITEMS.register(
+        "blank_celestial_contract"
+    ) { BlankCelestialContractItem(Item.Properties().stacksTo(1).fireResistant()) }
+    val CELESTIAL_CONTRACT: RegistrySupplier<Item> = ITEMS.register(
+        "celestial_contract"
+    ) { ContractItem(Item.Properties().stacksTo(1).fireResistant()) }
 
 
     val ABYSSAL_COIN: RegistrySupplier<Item> = ITEMS.register(
@@ -64,6 +71,12 @@ object ModItemRegistry {
     @JvmStatic
     fun register() {
         ITEMS.register()
-        CreativeTabRegistry.append(creativeTabKey, BLANK_ABYSSAL_CONTRACT, BLANK_BOUND_CONTRACT, ABYSSAL_COIN)
+        CreativeTabRegistry.append(
+            creativeTabKey,
+            BLANK_ABYSSAL_CONTRACT,
+            BLANK_BOUND_CONTRACT,
+            BLANK_CELESTIAL_CONTRACT,
+            ABYSSAL_COIN,
+        )
     }
 }
